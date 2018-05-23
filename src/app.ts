@@ -28,10 +28,7 @@ server.post('/api/messages', (req: Request, res: Response) => {
 			let state: any = conversationState.get(context);
 			if (!state.authData) {
 				//run auth
-				let cardActions = [{ type: "openUrl", value: 'http://localhost:3978/auth/facebook', title: "Log in with Facebook" }];
-				let card = CardFactory.thumbnailCard("", undefined, cardActions);
-				let facebookAuthMessage = MessageFactory.attachment(card);
-				await context.sendActivity(facebookAuthMessage);
+				await context.sendActivity(createFacebookCard());
 			} else {
 				//echo
 				await context.sendActivity(`You said ${context.activity.text}`)
@@ -48,51 +45,53 @@ let callbackURL = 'http://localhost:3978/auth/callback';
 
 let facebookClientId = '174907033110091';
 let facebookClientSecret = '482d08e1fa468e10d478ccc772452f24';
-let facebookBaseUrl = 'https://graph.facebook.com';
-let facebookTokenEndpoint = '/v2.11/oauth/access_token';
-let facebookAuthorizationEndpoint = '/v2.11/dialog/oauth';
+let facebookBaseAuthorizationUrl = 'https://www.facebook.com';
+let facebookBaseTokenUrl = 'https://graph.facebook.com';
+let facebookAuthorizationEndpoint = '/v3.0/dialog/oauth';
+let facebookTokenEndpoint = '/v3.0/oauth/access_token';
 
 //Create OAuth client
-
 const credentials: ModuleOptions = {
 	client: {
 		id: facebookClientId,
 		secret: facebookClientSecret
 	},
 	auth: {
-		tokenHost: facebookBaseUrl,
+		authorizeHost: facebookBaseAuthorizationUrl,
+		tokenHost: facebookBaseTokenUrl,
 		authorizePath: facebookAuthorizationEndpoint,
 		tokenPath: facebookTokenEndpoint
 	}
 };
 const oauth2: OAuthClient = createOAuth(credentials);
 
-passport.use(new FacebookStrategy({
-	clientID: facebookClientId,
-	clientSecret: facebookClientSecret,
-	callbackURL: callbackURL
-}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
-	//handle token
-	console.log(accessToken, refreshToken, profile, done)
-	done();
-}));
+//Open Url for Facebook authorization 
+const createFacebookCard = () => {
+	const authorizationUri: string = oauth2.authorizationCode.authorizeURL({
+		redirect_uri: callbackURL,
+		scope: [],
+		state: undefined
+	});
+	let cardActions = [{ type: "openUrl", value: authorizationUri, title: "Log in with Facebook" }];
+	let card = CardFactory.thumbnailCard("", undefined, cardActions);
+	let facebookAuthMessage = MessageFactory.attachment(card);
+	return facebookAuthMessage;
+}
 
-server.get('/auth/facebook', passport.authenticate('facebook'));
-
+//Create redirect endpoint for inital authorization code
 server.get('/auth/callback', (req: Request, res: Response) => {
 	let code = req.query().split("&")[0].slice(5);
 	const tokenConfig = {
 		code: code,
 		redirect_uri: callbackURL
 	};
-	console.log(tokenConfig)
 	oauth2.authorizationCode.getToken(tokenConfig)
 		.then((result: any) => {
 			const accessToken = oauth2.accessToken.create(result);
 			console.log("ACCESS", accessToken)
+			res.send("Code to come")
 		})
 		.catch((error: any) => {
 			console.log('Access Token Error', error);
 		});
-	res.send("Code to come")
 });
