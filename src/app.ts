@@ -1,7 +1,7 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, MessageFactory, CardFactory } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
-import { create as createOAuth, ModuleOptions } from 'simple-oauth2';
+import { create as createOAuth, ModuleOptions, OAuthClient } from 'simple-oauth2';
 
 let passport = require('passport');
 
@@ -40,12 +40,32 @@ server.post('/api/messages', (req: Request, res: Response) => {
 	})
 })
 
-//Facebook
+//---------------------Facebook----------------//
 
+//Given credentials
+
+let callbackURL = 'http://localhost:3978/auth/callback';
 
 let facebookClientId = '174907033110091';
 let facebookClientSecret = '482d08e1fa468e10d478ccc772452f24';
-let callbackURL = 'http://localhost:3978/auth/callback';
+let facebookBaseUrl = 'https://graph.facebook.com';
+let facebookTokenEndpoint = '/v2.11/oauth/access_token';
+let facebookAuthorizationEndpoint = '/v2.11/dialog/oauth';
+
+//Create OAuth client
+
+const credentials: ModuleOptions = {
+	client: {
+		id: facebookClientId,
+		secret: facebookClientSecret
+	},
+	auth: {
+		tokenHost: facebookBaseUrl,
+		authorizePath: facebookAuthorizationEndpoint,
+		tokenPath: facebookTokenEndpoint
+	}
+};
+const oauth2: OAuthClient = createOAuth(credentials);
 
 passport.use(new FacebookStrategy({
 	clientID: facebookClientId,
@@ -61,5 +81,18 @@ server.get('/auth/facebook', passport.authenticate('facebook'));
 
 server.get('/auth/callback', (req: Request, res: Response) => {
 	let code = req.query().split("&")[0].slice(5);
+	const tokenConfig = {
+		code: code,
+		redirect_uri: callbackURL
+	};
+	console.log(tokenConfig)
+	oauth2.authorizationCode.getToken(tokenConfig)
+		.then((result: any) => {
+			const accessToken = oauth2.accessToken.create(result);
+			console.log("ACCESS", accessToken)
+		})
+		.catch((error: any) => {
+			console.log('Access Token Error', error);
+		});
 	res.send("Code to come")
 });
