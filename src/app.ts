@@ -20,7 +20,13 @@ let adapter = new BotFrameworkAdapter({
 server.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
-			await context.sendActivity(`You said ${context.activity.text}`)
+			const state: StoreItem = conversationState.get(context) as StoreItem;
+			if (context.activity.text === 'logout') {
+				state.isAuthenticated = false;
+				await context.sendActivity(`Logged out!`)
+			} else {
+				await context.sendActivity(`You said ${context.activity.text}`)
+			}
 		}
 	})
 })
@@ -30,18 +36,23 @@ server.post('/api/messages', (req: Request, res: Response) => {
 const conversationState = new ConversationState(new MemoryStorage());
 
 const authenticationConfig: AuthenticationConfig = {
-	userIsAuthenticated: (context: TurnContext) => {
+	userIsAuthenticated: (context: TurnContext): boolean => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.isAuthenticated;
 	},
-	onLoginSuccess: (context: TurnContext, accessToken: AccessToken) => {
+	onLoginSuccess: (context: TurnContext, accessToken: AccessToken): void => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.facebookAccessToken = accessToken;
 		state.isAuthenticated = true;
+		console.log("ACCESS TOKEN", accessToken);
 	},
 	facebook: {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24'
+	},
+	activeDirectory: {
+		clientId: '',
+		clientSecret: ''
 	}
 }
 
