@@ -3,15 +3,16 @@ import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken } from '
 import { randomBytes } from 'crypto';
 import { Server, Request, Response } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
-import { KnownEndpointsConfig, AuthenticationConfig, ProviderType } from './interfaces';
+import { BotAuthenticationConfiguration, ProviderType } from './BotAuthenticationConfiguration';
+import { OAuthEndpointsConfiguration, oauthEndpoints } from './OAuthEndpoints';
 
-export class AuthenticationMiddleware {
+export class BotAuthenticationMiddleware {
 
 	private server: Server;
 	private adapter: BotFrameworkAdapter;
-	private knownEndpoints: KnownEndpointsConfig;
-	private authenticationConfig: AuthenticationConfig;
+	private authenticationConfig: BotAuthenticationConfiguration;
 	private callbackURL: string;
+	private oauthEndpoints: OAuthEndpointsConfiguration;
 	private oauthClients: {
 		facebookOAuthClient: OAuthClient;
 		activeDirectoryOAuthClient: OAuthClient;
@@ -23,33 +24,13 @@ export class AuthenticationMiddleware {
 	private sentCode: boolean;
 	private selectedProvider: ProviderType;
 
-	constructor(server: Server, adapter: BotFrameworkAdapter, authenticationConfig: AuthenticationConfig) {
+	constructor(server: Server, adapter: BotFrameworkAdapter, authenticationConfig: BotAuthenticationConfiguration) {
 		this.authenticated = false;
 		this.server = server;
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
-		this.knownEndpoints = {
-			facebook: {
-				tokenBaseUrl: 'https://graph.facebook.com',
-				tokenEndpoint: '/v3.0/oauth/access_token',
-				authorizationBaseUrl: 'https://www.facebook.com',
-				authorizationEndpoint: '/v3.0/dialog/oauth'
-			},
-			activeDirectory: {
-				tokenBaseUrl: 'https://login.microsoftonline.com',
-				tokenEndpoint: '/common/oauth2/v2.0/token',
-				authorizationBaseUrl: 'https://login.microsoftonline.com',
-				authorizationEndpoint: '/common/oauth2/v2.0/authorize'
-			},
-			github: {
-				tokenBaseUrl: 'https://github.com',
-				tokenEndpoint: '/login/oauth/access_token',
-				authorizationBaseUrl: 'https://github.com',
-				authorizationEndpoint: '/login/oauth/authorize'
-			}
-		}
+		this.oauthEndpoints = oauthEndpoints;
 		this.callbackURL = 'http://localhost:3978/auth/callback';
-
 		this.createRedirectEndpoint();
 		this.createOAuthClients();
 	}
@@ -148,7 +129,7 @@ export class AuthenticationMiddleware {
 				secret: '',
 			},
 			auth: {
-				tokenHost: this.knownEndpoints.activeDirectory.tokenBaseUrl,
+				tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl,
 			}
 		};
 		this.oauthClients = {
@@ -164,10 +145,10 @@ export class AuthenticationMiddleware {
 					secret: this.authenticationConfig.facebook.clientSecret
 				},
 				auth: {
-					authorizeHost: this.knownEndpoints.facebook.authorizationBaseUrl,
-					authorizePath: this.knownEndpoints.facebook.authorizationEndpoint,
-					tokenHost: this.knownEndpoints.facebook.tokenBaseUrl,
-					tokenPath: this.knownEndpoints.facebook.tokenEndpoint
+					authorizeHost: this.oauthEndpoints.facebook.authorizationBaseUrl,
+					authorizePath: this.oauthEndpoints.facebook.authorizationEndpoint,
+					tokenHost: this.oauthEndpoints.facebook.tokenBaseUrl,
+					tokenPath: this.oauthEndpoints.facebook.tokenEndpoint
 				}
 			};
 			this.oauthClients.facebookOAuthClient = createOAuth(facebookCredentials);
@@ -179,10 +160,10 @@ export class AuthenticationMiddleware {
 					secret: this.authenticationConfig.activeDirectory.clientSecret
 				},
 				auth: {
-					authorizeHost: this.knownEndpoints.activeDirectory.authorizationBaseUrl,
-					authorizePath: this.knownEndpoints.activeDirectory.authorizationEndpoint,
-					tokenHost: this.knownEndpoints.activeDirectory.tokenBaseUrl,
-					tokenPath: this.knownEndpoints.activeDirectory.tokenEndpoint
+					authorizeHost: this.oauthEndpoints.activeDirectory.authorizationBaseUrl,
+					authorizePath: this.oauthEndpoints.activeDirectory.authorizationEndpoint,
+					tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl,
+					tokenPath: this.oauthEndpoints.activeDirectory.tokenEndpoint
 				}
 			};
 			this.oauthClients.activeDirectoryOAuthClient = createOAuth(activeDirectoryCredentials);
@@ -194,10 +175,10 @@ export class AuthenticationMiddleware {
 					secret: this.authenticationConfig.github.clientSecret
 				},
 				auth: {
-					authorizeHost: this.knownEndpoints.github.authorizationBaseUrl,
-					authorizePath: this.knownEndpoints.github.authorizationEndpoint,
-					tokenHost: this.knownEndpoints.github.tokenBaseUrl,
-					tokenPath: this.knownEndpoints.github.tokenEndpoint
+					authorizeHost: this.oauthEndpoints.github.authorizationBaseUrl,
+					authorizePath: this.oauthEndpoints.github.authorizationEndpoint,
+					tokenHost: this.oauthEndpoints.github.tokenBaseUrl,
+					tokenPath: this.oauthEndpoints.github.tokenEndpoint
 				}
 			};
 			this.oauthClients.githubOAuthClient = createOAuth(githubCredentials);

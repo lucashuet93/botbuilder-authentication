@@ -1,7 +1,7 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
-import { AuthenticationMiddleware } from './AuthenticationMiddleware';
-import { AuthenticationConfig, AccessToken, ProviderType } from './interfaces';
+import { BotAuthenticationMiddleware } from './BotAuthenticationMiddleware';
+import { BotAuthenticationConfiguration, AccessToken, ProviderType } from './BotAuthenticationConfiguration';
 
 let passport = require('passport');
 
@@ -36,7 +36,7 @@ server.post('/api/messages', (req: Request, res: Response) => {
 
 //--------------------Usage-------------------------
 
-const authenticationConfig: AuthenticationConfig = {
+const authenticationConfig: BotAuthenticationConfiguration = {
 	userIsAuthenticated: (context: TurnContext): boolean => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.isAuthenticated;
@@ -61,5 +61,5 @@ const authenticationConfig: AuthenticationConfig = {
 	}
 }
 
-adapter.use(new AuthenticationMiddleware(server, adapter, authenticationConfig));
+adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
 
