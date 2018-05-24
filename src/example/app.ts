@@ -1,7 +1,6 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
-import { BotAuthenticationMiddleware } from './BotAuthenticationMiddleware';
-import { BotAuthenticationConfiguration, AccessToken, ProviderType } from './BotAuthenticationConfiguration';
+import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, AccessToken, ProviderType } from '../botbuilder-authentication';
 
 let passport = require('passport');
 
