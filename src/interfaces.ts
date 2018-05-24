@@ -8,6 +8,7 @@ export { AccessToken } from "simple-oauth2";
 export interface AuthenticationConfig {
 	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	onLoginSuccess: (context: TurnContext, accessToken: AccessToken) => Promise<void> | void;
+	noUserFoundMessage?: string;
 	facebook?: FacebookConfig;
 	activeDirectory?: ActiveDirectoryConfig;
 }
@@ -16,12 +17,14 @@ export interface FacebookConfig {
 	clientId: string;
 	clientSecret: string;
 	scopes?: string[];
+	buttonText?: string;
 }
 
 export interface ActiveDirectoryConfig {
 	clientId: string;
 	clientSecret: string;
 	scopes?: string[];
+	buttonText?: string;
 }
 
 //------------Known Endpoints-------------//

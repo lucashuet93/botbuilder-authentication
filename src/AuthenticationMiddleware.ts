@@ -50,7 +50,14 @@ export class AuthenticationMiddleware {
 		if (context.activity.type === 'message') {
 			if (!this.authenticationConfig.userIsAuthenticated(context)) {
 				//run auth
-				!this.sentCode ? await context.sendActivity(this.createAuthenticationCard(context)) : await this.handleMagicCode(context);
+				if (!this.sentCode) {
+					if (this.authenticationConfig.noUserFoundMessage) {
+						await context.sendActivity(this.authenticationConfig.noUserFoundMessage);
+					}
+					await context.sendActivity(this.createAuthenticationCard(context))
+				} else {
+					await this.handleMagicCode(context);
+				}
 				return;
 			} else {
 				//immediately pass on authenticated messages
@@ -176,7 +183,8 @@ export class AuthenticationMiddleware {
 				scope: this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : [],
 				state: StrategyType.Facebook
 			});
-			cardActions.push({ type: "openUrl", value: facebookAuthorizationUri, title: "Log in with Facebook" });
+			let facebookButtonTitle: string = this.authenticationConfig.facebook.buttonText ? this.authenticationConfig.facebook.buttonText : 'Log in with Facebook';
+			cardActions.push({ type: "openUrl", value: facebookAuthorizationUri, title: facebookButtonTitle });
 		}
 		if (this.authenticationConfig.activeDirectory) {
 			//pass the correct provider over in query string state		
@@ -185,7 +193,8 @@ export class AuthenticationMiddleware {
 				scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : [],
 				state: StrategyType.ActiveDirectory
 			});
-			cardActions.push({ type: "openUrl", value: activeDirectoryAuthorizationUri, title: "Log in with Microsoft" });
+			let activeDirectoryButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : 'Log in with Microsoft';
+			cardActions.push({ type: "openUrl", value: activeDirectoryAuthorizationUri, title: activeDirectoryButtonTitle });
 		}
 		let card: Attachment = CardFactory.thumbnailCard("", undefined, cardActions);
 		let authMessage: Partial<Activity> = MessageFactory.attachment(card);

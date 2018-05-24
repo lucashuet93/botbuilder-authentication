@@ -17,6 +17,9 @@ let adapter = new BotFrameworkAdapter({
 	appPassword: undefined
 });
 
+const conversationState = new ConversationState(new MemoryStorage());
+adapter.use(conversationState);
+
 server.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
@@ -32,8 +35,6 @@ server.post('/api/messages', (req: Request, res: Response) => {
 })
 
 //--------------------Usage-------------------------
-
-const conversationState = new ConversationState(new MemoryStorage());
 
 const authenticationConfig: AuthenticationConfig = {
 	userIsAuthenticated: (context: TurnContext): boolean => {
@@ -56,6 +57,5 @@ const authenticationConfig: AuthenticationConfig = {
 	}
 }
 
-adapter.use(conversationState);
 adapter.use(new AuthenticationMiddleware(server, adapter, authenticationConfig));
 
