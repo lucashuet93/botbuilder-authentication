@@ -15,6 +15,7 @@
     "@types/restify": "^5.0.8",
     "@types/simple-oauth2": "^1.1.1",
     "botbuilder": "^4.0.0-preview1.2",
+    "crypto": "^1.0.1",
     "passport": "^0.4.0",
     "passport-facebook": "^2.1.1",
     "restify": "^7.2.0",
