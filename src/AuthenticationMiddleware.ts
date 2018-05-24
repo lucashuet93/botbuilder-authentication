@@ -15,6 +15,7 @@ export class AuthenticationMiddleware {
 	private oauthClients: {
 		facebookOAuthClient: OAuthClient;
 		activeDirectoryOAuthClient: OAuthClient;
+		githubOAuthClient: OAuthClient;
 	}
 	private authenticated: boolean;
 	private magicCode: string;
@@ -31,13 +32,19 @@ export class AuthenticationMiddleware {
 				tokenBaseUrl: 'https://graph.facebook.com',
 				tokenEndpoint: '/v3.0/oauth/access_token',
 				authorizationBaseUrl: 'https://www.facebook.com',
-				authorizationEndpoint: '/v3.0/dialog/oauth',
+				authorizationEndpoint: '/v3.0/dialog/oauth'
 			},
 			activeDirectory: {
 				tokenBaseUrl: 'https://login.microsoftonline.com',
 				tokenEndpoint: '/common/oauth2/v2.0/token',
 				authorizationBaseUrl: 'https://login.microsoftonline.com',
-				authorizationEndpoint: '/common/oauth2/v2.0/authorize',
+				authorizationEndpoint: '/common/oauth2/v2.0/authorize'
+			},
+			github: {
+				tokenBaseUrl: 'https://github.com',
+				tokenEndpoint: '/login/oauth/access_token',
+				authorizationBaseUrl: 'https://github.com',
+				authorizationEndpoint: '/login/oauth/authorize'
 			}
 		}
 		this.callbackURL = 'http://localhost:3978/auth/callback';
@@ -106,6 +113,9 @@ export class AuthenticationMiddleware {
 				case StrategyType.Facebook:
 					selectedOAuthClient = this.oauthClients.facebookOAuthClient;
 					break;
+				case StrategyType.Github:
+					selectedOAuthClient = this.oauthClients.githubOAuthClient;
+					break;
 				default:
 					selectedOAuthClient = this.oauthClients.activeDirectoryOAuthClient;
 					break;
@@ -138,7 +148,8 @@ export class AuthenticationMiddleware {
 		};
 		this.oauthClients = {
 			facebookOAuthClient: createOAuth(initializationModule),
-			activeDirectoryOAuthClient: createOAuth(initializationModule)
+			activeDirectoryOAuthClient: createOAuth(initializationModule),
+			githubOAuthClient: createOAuth(initializationModule)
 		}
 		//Add providers the user passed configuration options for
 		if (this.authenticationConfig.facebook) {
@@ -171,6 +182,21 @@ export class AuthenticationMiddleware {
 			};
 			this.oauthClients.activeDirectoryOAuthClient = createOAuth(activeDirectoryCredentials);
 		}
+		if (this.authenticationConfig.github) {
+			const githubCredentials: ModuleOptions = {
+				client: {
+					id: this.authenticationConfig.github.clientId,
+					secret: this.authenticationConfig.github.clientSecret
+				},
+				auth: {
+					authorizeHost: this.knownEndpoints.github.authorizationBaseUrl,
+					authorizePath: this.knownEndpoints.github.authorizationEndpoint,
+					tokenHost: this.knownEndpoints.github.tokenBaseUrl,
+					tokenPath: this.knownEndpoints.github.tokenEndpoint
+				}
+			};
+			this.oauthClients.githubOAuthClient = createOAuth(githubCredentials);
+		}
 	}
 
 	createAuthenticationCard = (context: TurnContext): Partial<Activity> => {
@@ -195,6 +221,16 @@ export class AuthenticationMiddleware {
 			});
 			let activeDirectoryButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : 'Log in with Microsoft';
 			cardActions.push({ type: "openUrl", value: activeDirectoryAuthorizationUri, title: activeDirectoryButtonTitle });
+		}
+		if (this.authenticationConfig.github) {
+			//pass the correct provider over in query string state		
+			const githubAuthorizationUri: string = this.oauthClients.githubOAuthClient.authorizationCode.authorizeURL({
+				redirect_uri: this.callbackURL,
+				scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : ['user'],
+				state: StrategyType.Github
+			});
+			let githubButtonTitle: string = this.authenticationConfig.github.buttonText ? this.authenticationConfig.github.buttonText : 'Log in with GitHub';
+			cardActions.push({ type: "openUrl", value: githubAuthorizationUri, title: githubButtonTitle });
 		}
 		let card: Attachment = CardFactory.thumbnailCard("", undefined, cardActions);
 		let authMessage: Partial<Activity> = MessageFactory.attachment(card);

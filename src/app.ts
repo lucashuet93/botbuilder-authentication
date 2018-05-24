@@ -45,6 +45,7 @@ const authenticationConfig: AuthenticationConfig = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.facebookAccessToken = accessToken;
 		state.isAuthenticated = true;
+		console.log("ACCESS TOKEN", accessToken)
 	},
 	facebook: {
 		clientId: '174907033110091',
@@ -53,6 +54,10 @@ const authenticationConfig: AuthenticationConfig = {
 	activeDirectory: {
 		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
 		clientSecret: 'bhchfIQN348[^foKKOG54||'
+	},
+	github: {
+		clientId: 'f998ca5d45caba4cfac2',
+		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
 	}
 }
 

@@ -1,7 +1,7 @@
-import { TurnContext } from "botbuilder";
-import { AccessToken } from "simple-oauth2";
+import { TurnContext } from 'botbuilder';
+import { AccessToken } from 'simple-oauth2';
 
-export { AccessToken } from "simple-oauth2";
+export { AccessToken } from 'simple-oauth2';
 
 //------------Config-------------//
 
@@ -11,9 +11,17 @@ export interface AuthenticationConfig {
 	noUserFoundMessage?: string;
 	facebook?: FacebookConfig;
 	activeDirectory?: ActiveDirectoryConfig;
+	github?: GithubConfig;
 }
 
 export interface FacebookConfig {
+	clientId: string;
+	clientSecret: string;
+	scopes?: string[];
+	buttonText?: string;
+}
+
+export interface GithubConfig {
 	clientId: string;
 	clientSecret: string;
 	scopes?: string[];
@@ -32,6 +40,7 @@ export interface ActiveDirectoryConfig {
 export interface KnownEndpointsConfig {
 	facebook: KnownEndpoints;
 	activeDirectory: KnownEndpoints;
+	github: KnownEndpoints;
 }
 
 export interface KnownEndpoints {
@@ -44,6 +53,7 @@ export interface KnownEndpoints {
 //------------Enums-------------//
 
 export enum StrategyType {
-	ActiveDirectory = "ActiveDirectory",
-	Facebook = "Facebook"
+	ActiveDirectory = 'ActiveDirectory',
+	Facebook = 'Facebook',
+	Github = 'Github'
 }
