@@ -1,8 +1,7 @@
-import { BotFrameworkAdapter, MemoryStorage, ConversationState, MessageFactory, CardFactory, TurnContext, Activity } from 'botbuilder';
+import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
-import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
-import { AuthenticationHelper } from './AuthenticationHelper';
-import { AuthenticationConfig } from './interfaces';
+import { AuthenticationMiddleware } from './AuthenticationMiddleware';
+import { AuthenticationConfig, AccessToken } from './interfaces';
 
 let passport = require('passport');
 
@@ -18,17 +17,6 @@ let adapter = new BotFrameworkAdapter({
 	appPassword: undefined
 });
 
-//--------------------Usage-------------------------
-
-const authenticationConfig: AuthenticationConfig = {
-	facebook: {
-		clientId: '174907033110091',
-		clientSecret: '482d08e1fa468e10d478ccc772452f24'
-	}
-}
-
-adapter.use(new AuthenticationHelper(server, authenticationConfig));
-
 server.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
@@ -36,4 +24,27 @@ server.post('/api/messages', (req: Request, res: Response) => {
 		}
 	})
 })
+
+//--------------------Usage-------------------------
+
+const conversationState = new ConversationState(new MemoryStorage());
+
+const authenticationConfig: AuthenticationConfig = {
+	userIsAuthenticated: (context: TurnContext) => {
+		const state: StoreItem = conversationState.get(context) as StoreItem;
+		return state.isAuthenticated;
+	},
+	onLoginSuccess: (context: TurnContext, accessToken: AccessToken) => {
+		const state: StoreItem = conversationState.get(context) as StoreItem;
+		state.facebookAccessToken = accessToken;
+		state.isAuthenticated = true;
+	},
+	facebook: {
+		clientId: '174907033110091',
+		clientSecret: '482d08e1fa468e10d478ccc772452f24'
+	}
+}
+
+adapter.use(conversationState);
+adapter.use(new AuthenticationMiddleware(server, adapter, authenticationConfig));
 
