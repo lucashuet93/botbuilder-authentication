@@ -3,7 +3,7 @@ import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken } from '
 import { randomBytes } from 'crypto';
 import { Server, Request, Response } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
-import { KnownEndpointsConfig, AuthenticationConfig, StrategyType } from './interfaces';
+import { KnownEndpointsConfig, AuthenticationConfig, ProviderType } from './interfaces';
 
 export class AuthenticationMiddleware {
 
@@ -21,6 +21,7 @@ export class AuthenticationMiddleware {
 	private magicCode: string;
 	private currentAccessToken: AccessToken | undefined;
 	private sentCode: boolean;
+	private selectedProvider: ProviderType;
 
 	constructor(server: Server, adapter: BotFrameworkAdapter, authenticationConfig: AuthenticationConfig) {
 		this.authenticated = false;
@@ -80,7 +81,7 @@ export class AuthenticationMiddleware {
 		let submittedCode: string = context.activity.text;
 		if (submittedCode.toLowerCase() === this.magicCode.toLowerCase()) {
 			//recreate context and pass it and the access token to the user
-			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken!);
+			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken!, this.selectedProvider);
 			//reset necessary properties
 			this.magicCode = '';
 			this.sentCode = false;
@@ -107,17 +108,21 @@ export class AuthenticationMiddleware {
 			let state: string = decodeURIComponent(req.query().split("&")[1].slice(6));
 			let selectedOAuthClient: OAuthClient;
 			switch (state) {
-				case StrategyType.ActiveDirectory:
+				case ProviderType.ActiveDirectory:
 					selectedOAuthClient = this.oauthClients.activeDirectoryOAuthClient;
+					this.selectedProvider = ProviderType.ActiveDirectory;
 					break;
-				case StrategyType.Facebook:
+				case ProviderType.Facebook:
 					selectedOAuthClient = this.oauthClients.facebookOAuthClient;
+					this.selectedProvider = ProviderType.Facebook;
 					break;
-				case StrategyType.Github:
+				case ProviderType.Github:
 					selectedOAuthClient = this.oauthClients.githubOAuthClient;
+					this.selectedProvider = ProviderType.Github;
 					break;
 				default:
 					selectedOAuthClient = this.oauthClients.activeDirectoryOAuthClient;
+					this.selectedProvider = ProviderType.ActiveDirectory;
 					break;
 			}
 			//exchange the authorization code for the access token
@@ -207,7 +212,7 @@ export class AuthenticationMiddleware {
 			const facebookAuthorizationUri: string = this.oauthClients.facebookOAuthClient.authorizationCode.authorizeURL({
 				redirect_uri: this.callbackURL,
 				scope: this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : ['public_profile'],
-				state: StrategyType.Facebook
+				state: ProviderType.Facebook
 			});
 			let facebookButtonTitle: string = this.authenticationConfig.facebook.buttonText ? this.authenticationConfig.facebook.buttonText : 'Log in with Facebook';
 			cardActions.push({ type: "openUrl", value: facebookAuthorizationUri, title: facebookButtonTitle });
@@ -217,7 +222,7 @@ export class AuthenticationMiddleware {
 			const activeDirectoryAuthorizationUri: string = this.oauthClients.activeDirectoryOAuthClient.authorizationCode.authorizeURL({
 				redirect_uri: this.callbackURL,
 				scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : ['User.Read'],
-				state: StrategyType.ActiveDirectory
+				state: ProviderType.ActiveDirectory
 			});
 			let activeDirectoryButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : 'Log in with Microsoft';
 			cardActions.push({ type: "openUrl", value: activeDirectoryAuthorizationUri, title: activeDirectoryButtonTitle });
@@ -227,7 +232,7 @@ export class AuthenticationMiddleware {
 			const githubAuthorizationUri: string = this.oauthClients.githubOAuthClient.authorizationCode.authorizeURL({
 				redirect_uri: this.callbackURL,
 				scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : ['user'],
-				state: StrategyType.Github
+				state: ProviderType.Github
 			});
 			let githubButtonTitle: string = this.authenticationConfig.github.buttonText ? this.authenticationConfig.github.buttonText : 'Log in with GitHub';
 			cardActions.push({ type: "openUrl", value: githubAuthorizationUri, title: githubButtonTitle });

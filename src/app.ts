@@ -1,7 +1,7 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
 import { AuthenticationMiddleware } from './AuthenticationMiddleware';
-import { AuthenticationConfig, AccessToken } from './interfaces';
+import { AuthenticationConfig, AccessToken, ProviderType } from './interfaces';
 
 let passport = require('passport');
 
@@ -41,11 +41,11 @@ const authenticationConfig: AuthenticationConfig = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.isAuthenticated;
 	},
-	onLoginSuccess: (context: TurnContext, accessToken: AccessToken): void => {
+	onLoginSuccess: (context: TurnContext, accessToken: AccessToken, provider: ProviderType): void => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.facebookAccessToken = accessToken;
 		state.isAuthenticated = true;
-		console.log("ACCESS TOKEN", accessToken)
+		console.log("ACCESS TOKEN", provider, accessToken)
 	},
 	facebook: {
 		clientId: '174907033110091',

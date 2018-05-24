@@ -7,7 +7,7 @@ export { AccessToken } from 'simple-oauth2';
 
 export interface AuthenticationConfig {
 	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
-	onLoginSuccess: (context: TurnContext, accessToken: AccessToken) => Promise<void> | void;
+	onLoginSuccess: (context: TurnContext, accessToken: AccessToken, provider: ProviderType) => Promise<void> | void;
 	noUserFoundMessage?: string;
 	facebook?: FacebookConfig;
 	activeDirectory?: ActiveDirectoryConfig;
@@ -52,7 +52,7 @@ export interface KnownEndpoints {
 
 //------------Enums-------------//
 
-export enum StrategyType {
+export enum ProviderType {
 	ActiveDirectory = 'ActiveDirectory',
 	Facebook = 'Facebook',
 	Github = 'Github'
