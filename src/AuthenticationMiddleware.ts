@@ -34,10 +34,10 @@ export class AuthenticationMiddleware {
 				authorizationEndpoint: '/v3.0/dialog/oauth',
 			},
 			activeDirectory: {
-				tokenBaseUrl: 'https://login.microsoftonline.com/common',
-				tokenEndpoint: '/oauth2/v2.0/token',
-				authorizationBaseUrl: 'https://login.microsoftonline.com/common',
-				authorizationEndpoint: '/oauth2/v2.0/authorize',
+				tokenBaseUrl: 'https://login.microsoftonline.com',
+				tokenEndpoint: '/common/oauth2/v2.0/token',
+				authorizationBaseUrl: 'https://login.microsoftonline.com',
+				authorizationEndpoint: '/common/oauth2/v2.0/authorize',
 			}
 		}
 		this.callbackURL = 'http://localhost:3978/auth/callback';
@@ -180,7 +180,7 @@ export class AuthenticationMiddleware {
 			//pass the correct provider over in query string state		
 			const facebookAuthorizationUri: string = this.oauthClients.facebookOAuthClient.authorizationCode.authorizeURL({
 				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : [],
+				scope: this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : ['public_profile'],
 				state: StrategyType.Facebook
 			});
 			let facebookButtonTitle: string = this.authenticationConfig.facebook.buttonText ? this.authenticationConfig.facebook.buttonText : 'Log in with Facebook';
@@ -188,9 +188,9 @@ export class AuthenticationMiddleware {
 		}
 		if (this.authenticationConfig.activeDirectory) {
 			//pass the correct provider over in query string state		
-			const activeDirectoryAuthorizationUri: string = this.oauthClients.facebookOAuthClient.authorizationCode.authorizeURL({
+			const activeDirectoryAuthorizationUri: string = this.oauthClients.activeDirectoryOAuthClient.authorizationCode.authorizeURL({
 				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : [],
+				scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : ['User.Read'],
 				state: StrategyType.ActiveDirectory
 			});
 			let activeDirectoryButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : 'Log in with Microsoft';
