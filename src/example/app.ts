@@ -2,8 +2,6 @@ import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, Sto
 import { createServer, Server, Request, Response } from 'restify';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, AccessToken, ProviderType } from '../botbuilder-authentication';
 
-let passport = require('passport');
-
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
 
@@ -42,7 +40,6 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	},
 	onLoginSuccess: (context: TurnContext, accessToken: AccessToken, provider: ProviderType): void => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		state.facebookAccessToken = accessToken;
 		state.isAuthenticated = true;
 		console.log("ACCESS TOKEN", provider, accessToken)
 	},

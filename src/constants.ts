@@ -1,14 +1,18 @@
-export interface OAuthEndpointsConfiguration {
-	facebook: OAuthEndpoints;
-	activeDirectory: OAuthEndpoints;
-	github: OAuthEndpoints;
-}
+import { ProviderDefaultOptions, OAuthEndpointsConfiguration } from "./interfaces";
 
-export interface OAuthEndpoints {
-	tokenBaseUrl: string;
-	tokenEndpoint: string;
-	authorizationBaseUrl: string;
-	authorizationEndpoint: string;
+export const providerDefaultOptions: ProviderDefaultOptions = {
+	facebook: {
+		scopes: ['public_profile'],
+		buttonText: 'Log in with Facebook'
+	},
+	activeDirectory: {
+		scopes: ['User.Read'],
+		buttonText: 'Log in with Microsoft'
+	},
+	github: {
+		scopes: ['user'],
+		buttonText: 'Log in with GitHub'
+	},
 }
 
 export const oauthEndpoints: OAuthEndpointsConfiguration = {

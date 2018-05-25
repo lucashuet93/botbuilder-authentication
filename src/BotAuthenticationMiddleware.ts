@@ -3,8 +3,9 @@ import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken } from '
 import { randomBytes } from 'crypto';
 import { Server, Request, Response } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
-import { BotAuthenticationConfiguration, ProviderType } from './BotAuthenticationConfiguration';
-import { OAuthEndpointsConfiguration, oauthEndpoints } from './OAuthEndpoints';
+import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderDefaultOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints } from './interfaces';
+import { ProviderType } from './enums';
+import { providerDefaultOptions, oauthEndpoints } from './constants';
 
 export class BotAuthenticationMiddleware {
 
@@ -14,9 +15,9 @@ export class BotAuthenticationMiddleware {
 	private callbackURL: string;
 	private oauthEndpoints: OAuthEndpointsConfiguration;
 	private oauthClients: {
-		facebookOAuthClient: OAuthClient;
-		activeDirectoryOAuthClient: OAuthClient;
-		githubOAuthClient: OAuthClient;
+		facebook: OAuthClient;
+		activeDirectory: OAuthClient;
+		github: OAuthClient;
 	}
 	private authenticated: boolean;
 	private magicCode: string;
@@ -32,7 +33,7 @@ export class BotAuthenticationMiddleware {
 		this.oauthEndpoints = oauthEndpoints;
 		this.callbackURL = 'http://localhost:3978/auth/callback';
 		this.createRedirectEndpoint();
-		this.createOAuthClients();
+		this.createOAuthClientObject();
 	}
 
 	async onTurn(context: TurnContext, next: Function) {
@@ -85,24 +86,24 @@ export class BotAuthenticationMiddleware {
 				code: code,
 				redirect_uri: this.callbackURL
 			};
-			//grab the correct provider passed over in query string state (from card)
+			//parse the selected provider passed over in query string state (from card)
 			let state: string = decodeURIComponent(req.query().split("&")[1].slice(6));
 			let selectedOAuthClient: OAuthClient;
 			switch (state) {
 				case ProviderType.ActiveDirectory:
-					selectedOAuthClient = this.oauthClients.activeDirectoryOAuthClient;
+					selectedOAuthClient = this.oauthClients.activeDirectory;
 					this.selectedProvider = ProviderType.ActiveDirectory;
 					break;
 				case ProviderType.Facebook:
-					selectedOAuthClient = this.oauthClients.facebookOAuthClient;
+					selectedOAuthClient = this.oauthClients.facebook;
 					this.selectedProvider = ProviderType.Facebook;
 					break;
 				case ProviderType.Github:
-					selectedOAuthClient = this.oauthClients.githubOAuthClient;
+					selectedOAuthClient = this.oauthClients.github;
 					this.selectedProvider = ProviderType.Github;
 					break;
 				default:
-					selectedOAuthClient = this.oauthClients.activeDirectoryOAuthClient;
+					selectedOAuthClient = this.oauthClients.activeDirectory;
 					this.selectedProvider = ProviderType.ActiveDirectory;
 					break;
 			}
@@ -121,105 +122,67 @@ export class BotAuthenticationMiddleware {
 				});
 		});
 	}
-	createOAuthClients(): void {
+
+	createOAuthClientObject(): void {
 		//Initialize OAuthClients - overcome javascript errors without adding nullability
 		let initializationModule: ModuleOptions = {
-			client: {
-				id: '',
-				secret: '',
-			},
-			auth: {
-				tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl,
-			}
+			client: { id: '', secret: '', },
+			auth: { tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl }
 		};
 		this.oauthClients = {
-			facebookOAuthClient: createOAuth(initializationModule),
-			activeDirectoryOAuthClient: createOAuth(initializationModule),
-			githubOAuthClient: createOAuth(initializationModule)
+			facebook: createOAuth(initializationModule),
+			activeDirectory: createOAuth(initializationModule),
+			github: createOAuth(initializationModule)
 		}
 		//Add providers the user passed configuration options for
-		if (this.authenticationConfig.facebook) {
-			const facebookCredentials: ModuleOptions = {
-				client: {
-					id: this.authenticationConfig.facebook.clientId,
-					secret: this.authenticationConfig.facebook.clientSecret
-				},
-				auth: {
-					authorizeHost: this.oauthEndpoints.facebook.authorizationBaseUrl,
-					authorizePath: this.oauthEndpoints.facebook.authorizationEndpoint,
-					tokenHost: this.oauthEndpoints.facebook.tokenBaseUrl,
-					tokenPath: this.oauthEndpoints.facebook.tokenEndpoint
-				}
-			};
-			this.oauthClients.facebookOAuthClient = createOAuth(facebookCredentials);
-		}
-		if (this.authenticationConfig.activeDirectory) {
-			const activeDirectoryCredentials: ModuleOptions = {
-				client: {
-					id: this.authenticationConfig.activeDirectory.clientId,
-					secret: this.authenticationConfig.activeDirectory.clientSecret
-				},
-				auth: {
-					authorizeHost: this.oauthEndpoints.activeDirectory.authorizationBaseUrl,
-					authorizePath: this.oauthEndpoints.activeDirectory.authorizationEndpoint,
-					tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl,
-					tokenPath: this.oauthEndpoints.activeDirectory.tokenEndpoint
-				}
-			};
-			this.oauthClients.activeDirectoryOAuthClient = createOAuth(activeDirectoryCredentials);
-		}
-		if (this.authenticationConfig.github) {
-			const githubCredentials: ModuleOptions = {
-				client: {
-					id: this.authenticationConfig.github.clientId,
-					secret: this.authenticationConfig.github.clientSecret
-				},
-				auth: {
-					authorizeHost: this.oauthEndpoints.github.authorizationBaseUrl,
-					authorizePath: this.oauthEndpoints.github.authorizationEndpoint,
-					tokenHost: this.oauthEndpoints.github.tokenBaseUrl,
-					tokenPath: this.oauthEndpoints.github.tokenEndpoint
-				}
-			};
-			this.oauthClients.githubOAuthClient = createOAuth(githubCredentials);
-		}
+		if (this.authenticationConfig.facebook) this.oauthClients.facebook = this.createOAuthClient(ProviderType.Facebook);
+		if (this.authenticationConfig.activeDirectory) this.oauthClients.activeDirectory = this.createOAuthClient(ProviderType.ActiveDirectory);
+		if (this.authenticationConfig.github) this.oauthClients.github = this.createOAuthClient(ProviderType.Github);
+
+	}
+
+	createOAuthClient(provider: ProviderType): OAuthClient {
+		const credentials: ModuleOptions = {
+			client: {
+				id: (this.authenticationConfig[provider] as ProviderConfiguration).clientId,
+				secret: (this.authenticationConfig[provider] as ProviderConfiguration).clientSecret
+			},
+			auth: {
+				authorizeHost: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationBaseUrl,
+				authorizePath: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationEndpoint,
+				tokenHost: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenBaseUrl,
+				tokenPath: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenEndpoint
+			}
+		};
+		return createOAuth(credentials);
 	}
 
 	createAuthenticationCard = (context: TurnContext): Partial<Activity> => {
 		//Add buttons for each provider the user passed configuration options for
 		let cardActions: CardAction[] = [];
 		if (this.authenticationConfig.facebook) {
-			//pass the correct provider over in query string state		
-			const facebookAuthorizationUri: string = this.oauthClients.facebookOAuthClient.authorizationCode.authorizeURL({
-				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : ['public_profile'],
-				state: ProviderType.Facebook
-			});
-			let facebookButtonTitle: string = this.authenticationConfig.facebook.buttonText ? this.authenticationConfig.facebook.buttonText : 'Log in with Facebook';
-			cardActions.push({ type: "openUrl", value: facebookAuthorizationUri, title: facebookButtonTitle });
+			cardActions.push(this.createAuthenticationButton(ProviderType.Facebook));
 		}
 		if (this.authenticationConfig.activeDirectory) {
-			//pass the correct provider over in query string state		
-			const activeDirectoryAuthorizationUri: string = this.oauthClients.activeDirectoryOAuthClient.authorizationCode.authorizeURL({
-				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : ['User.Read'],
-				state: ProviderType.ActiveDirectory
-			});
-			let activeDirectoryButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : 'Log in with Microsoft';
-			cardActions.push({ type: "openUrl", value: activeDirectoryAuthorizationUri, title: activeDirectoryButtonTitle });
+			cardActions.push(this.createAuthenticationButton(ProviderType.ActiveDirectory));
 		}
 		if (this.authenticationConfig.github) {
-			//pass the correct provider over in query string state		
-			const githubAuthorizationUri: string = this.oauthClients.githubOAuthClient.authorizationCode.authorizeURL({
-				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : ['user'],
-				state: ProviderType.Github
-			});
-			let githubButtonTitle: string = this.authenticationConfig.github.buttonText ? this.authenticationConfig.github.buttonText : 'Log in with GitHub';
-			cardActions.push({ type: "openUrl", value: githubAuthorizationUri, title: githubButtonTitle });
+			cardActions.push(this.createAuthenticationButton(ProviderType.Github));
 		}
 		let card: Attachment = CardFactory.thumbnailCard("", undefined, cardActions);
 		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 		return authMessage;
+	}
+
+	createAuthenticationButton(provider: ProviderType): CardAction {
+		//pass the correct provider over in query string state, attach scopes and button text if provided		
+		const authorizationUri: string = this.oauthClients[provider].authorizationCode.authorizeURL({
+			redirect_uri: this.callbackURL,
+			scope: (this.authenticationConfig[provider] as ProviderConfiguration).scopes ? (this.authenticationConfig[provider] as ProviderConfiguration).scopes : (providerDefaultOptions[provider] as ProviderDefaults).scopes,
+			state: provider
+		});
+		let buttonTitle: string = (this.authenticationConfig[provider] as ProviderConfiguration).buttonText ? (this.authenticationConfig[provider] as ProviderConfiguration).buttonText! : (providerDefaultOptions[provider] as ProviderDefaults).buttonText;
+		let button: CardAction = { type: "openUrl", value: authorizationUri, title: buttonTitle };
+		return button;
 	}
 }
