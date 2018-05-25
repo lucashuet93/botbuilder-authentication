@@ -62,19 +62,17 @@ export class BotAuthenticationMiddleware {
 	async handleMagicCode(context: TurnContext): Promise<void> {
 		let submittedCode: string = context.activity.text;
 		if (submittedCode.toLowerCase() === this.magicCode.toLowerCase()) {
-			//recreate context and pass it and the access token to the user
-			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken!, this.selectedProvider);
 			//reset necessary properties
 			this.magicCode = '';
 			this.sentCode = false;
 			this.currentAccessToken = undefined;
-			await context.sendActivity("Authentication Success");
+			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken!, this.selectedProvider);
 		} else {
 			//reset necessary properties
 			this.magicCode = '';
 			this.sentCode = false;
 			this.currentAccessToken = undefined;
-			await context.sendActivity("Authentication Failure");
+			await this.authenticationConfig.onLoginFailure(context, this.selectedProvider);
 		}
 	}
 

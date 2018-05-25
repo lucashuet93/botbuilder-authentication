@@ -38,10 +38,16 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.isAuthenticated;
 	},
-	onLoginSuccess: (context: TurnContext, accessToken: AccessToken, provider: ProviderType): void => {
+	onLoginSuccess: async (context: TurnContext, accessToken: AccessToken, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.isAuthenticated = true;
 		console.log("ACCESS TOKEN", provider, accessToken)
+		await context.sendActivity("You're logged in!")		
+	},
+	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
+		const state: StoreItem = conversationState.get(context) as StoreItem;
+		state.isAuthenticated = false;
+		await context.sendActivity("Login failed.")
 	},
 	facebook: {
 		clientId: '174907033110091',
