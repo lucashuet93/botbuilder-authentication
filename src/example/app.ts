@@ -41,7 +41,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.isAuthenticated = true;
-		console.log("ACCESS TOKEN", accessToken)
+		console.log("ACCESS TOKEN", accessToken, provider)
 		await context.sendActivity("You're logged in!")		
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {

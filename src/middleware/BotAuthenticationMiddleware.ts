@@ -34,7 +34,7 @@ export class BotAuthenticationMiddleware {
 		this.authenticationConfig = authenticationConfig;
 		this.oauthEndpoints = oauthEndpoints;
 		this.callbackURL = 'http://localhost:3978/auth/callback';
-		this.createRedirectEndpoint();
+		this.createRedirectEndpoints();
 		this.createOAuthClientObject();
 		this.setUpPassport();
 	}
@@ -79,120 +79,13 @@ export class BotAuthenticationMiddleware {
 		}
 	}
 
-	setUpPassport() {
-		this.server.use(passport.initialize());
-		this.server.use(passport.session());
-		this.server.use(restify.plugins.queryParser());
-		this.server.use(restify.plugins.bodyParser());
-		passport.serializeUser((user: any, done: Function) => {
-			done(null, user);
-		});
-		passport.serializeUser((user: any, done: Function) => {
-			done(null, user);
-		});
-		this.server.get('/auth/success', (req: Request, res: Response) => {
-			let magicCode: string = this.generateMagicCode();
-			res.send(`Please enter the code into the bot: ${magicCode}`);
-		});
-		this.server.get('/auth/failure', (req: Request, res: Response) => {
-			res.send(`Authentication Failed`);
-		});
-
-		if (this.authenticationConfig.facebook) {
-			//Facebook
-			passport.use(new FacebookStrategy({
-				clientID: this.authenticationConfig.facebook!.clientId,
-				clientSecret: this.authenticationConfig.facebook!.clientSecret,
-				callbackURL: 'http://localhost:3978/auth/facebook/callback'
-			}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Facebook;
-				done(null, profile);
-			}));
-			let facebookScope: string[] = this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : providerDefaultOptions.facebook.scopes;
-			this.server.get('/auth/facebook', passport.authenticate('facebook', { scope: facebookScope }));
-			this.server.get('/auth/facebook/callback',
-				passport.authenticate('facebook', {
-					successRedirect: '/auth/success',
-					failureRedirect: '/auth/failure'
-				}));
-		}
-	}
-
-	createRedirectEndpoint(): void {
-		//Create redirect endpoint for authorization code, then exchange it for access token and save necessary properties
-		this.server.get('/auth/callback', (req: Request, res: Response) => {
-			let code: string = req.query.code;
-			const tokenConfig = {
-				code: code,
-				redirect_uri: this.callbackURL
-			};
-			//parse the selected provider passed over in query string state (from card)
-			let selectedOAuthClient: OAuthClient;
-			switch (req.query.state) {
-				case ProviderType.ActiveDirectory:
-					selectedOAuthClient = this.oauthClients.activeDirectory;
-					this.selectedProvider = ProviderType.ActiveDirectory;
-					break;
-				case ProviderType.Github:
-					selectedOAuthClient = this.oauthClients.github;
-					this.selectedProvider = ProviderType.Github;
-					break;
-				default:
-					selectedOAuthClient = this.oauthClients.activeDirectory;
-					this.selectedProvider = ProviderType.ActiveDirectory;
-					break;
-			}
-			//exchange the authorization code for the access token
-			selectedOAuthClient.authorizationCode.getToken(tokenConfig)
-				.then((result: any) => {
-					const accessToken: AccessToken = selectedOAuthClient.accessToken.create(result);
-					this.currentAccessToken = accessToken.token['access_token'] as string;
-					let magicCode: string = this.generateMagicCode();
-					res.send(`Please enter the code into the bot: ${magicCode}`);
-				})
-				.catch((error: any) => {
-					console.log('Access Token Error', error);
-				});
-		});
-	}
+	//------------------------------------------Helpers------------------------------------------
 
 	generateMagicCode(): string {
 		let magicCode: string = randomBytes(4).toString('hex');
 		this.magicCode = magicCode;
 		this.sentCode = true;
 		return magicCode;
-	}
-
-	createOAuthClientObject(): void {
-		//Initialize OAuthClients - overcome javascript errors without adding nullability
-		let initializationModule: ModuleOptions = {
-			client: { id: '', secret: '', },
-			auth: { tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl }
-		};
-		this.oauthClients = {
-			activeDirectory: createOAuth(initializationModule),
-			github: createOAuth(initializationModule)
-		}
-		//Add providers the user passed configuration options for
-		if (this.authenticationConfig.activeDirectory) this.oauthClients.activeDirectory = this.createOAuthClient(ProviderType.ActiveDirectory);
-		if (this.authenticationConfig.github) this.oauthClients.github = this.createOAuthClient(ProviderType.Github);
-	}
-
-	createOAuthClient(provider: ProviderType): OAuthClient {
-		const credentials: ModuleOptions = {
-			client: {
-				id: (this.authenticationConfig[provider] as ProviderConfiguration).clientId,
-				secret: (this.authenticationConfig[provider] as ProviderConfiguration).clientSecret
-			},
-			auth: {
-				authorizeHost: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationBaseUrl,
-				authorizePath: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationEndpoint,
-				tokenHost: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenBaseUrl,
-				tokenPath: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenEndpoint
-			}
-		};
-		return createOAuth(credentials);
 	}
 
 	createAuthenticationCard = (context: TurnContext): Partial<Activity> => {
@@ -227,5 +120,131 @@ export class BotAuthenticationMiddleware {
 		let card: Attachment = CardFactory.thumbnailCard("", undefined, cardActions);
 		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 		return authMessage;
+	}
+
+	//------------------------------------------Passport------------------------------------------
+
+	//Used for Facebook, Google, and Twitter
+
+	setUpPassport() {
+		//Initialize Passport
+		this.server.use(passport.initialize());
+		this.server.use(passport.session());
+		passport.serializeUser((user: any, done: Function) => {
+			done(null, user);
+		});
+		passport.serializeUser((user: any, done: Function) => {
+			done(null, user);
+		});
+
+		//Facebook
+		if (this.authenticationConfig.facebook) {
+			passport.use(new FacebookStrategy({
+				clientID: this.authenticationConfig.facebook!.clientId,
+				clientSecret: this.authenticationConfig.facebook!.clientSecret,
+				callbackURL: 'http://localhost:3978/auth/facebook/callback'
+			}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
+				//store the access token on successful login (runs before successRedirect)
+				this.currentAccessToken = accessToken;
+				this.selectedProvider = ProviderType.Facebook;
+				done(null, profile);
+			}));
+			let facebookScope: string[] = this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : providerDefaultOptions.facebook.scopes;
+			this.server.get('/auth/facebook', passport.authenticate('facebook', { scope: facebookScope }));
+			this.server.get('/auth/facebook/callback',
+				passport.authenticate('facebook', {
+					successRedirect: '/auth/callback',
+					failureRedirect: '/auth/failure'
+				}));
+		}
+	}
+	
+	//------------------------------------------OAuth------------------------------------------
+
+	//Used for Active Directory and Github
+
+	createOAuthClientObject(): void {
+		//Initialize OAuthClients - overcome javascript errors without adding nullability
+		let initializationModule: ModuleOptions = {
+			client: { id: '', secret: '', },
+			auth: { tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl }
+		};
+		this.oauthClients = {
+			activeDirectory: createOAuth(initializationModule),
+			github: createOAuth(initializationModule)
+		}
+		//Add providers the user passed configuration options for
+		if (this.authenticationConfig.activeDirectory) this.oauthClients.activeDirectory = this.createOAuthClient(ProviderType.ActiveDirectory);
+		if (this.authenticationConfig.github) this.oauthClients.github = this.createOAuthClient(ProviderType.Github);
+	}
+
+	createOAuthClient(provider: ProviderType): OAuthClient {
+		//Take the provided client id and secret with the provider's default oauth endpoints to create an OAuth client
+		const credentials: ModuleOptions = {
+			client: {
+				id: (this.authenticationConfig[provider] as ProviderConfiguration).clientId,
+				secret: (this.authenticationConfig[provider] as ProviderConfiguration).clientSecret
+			},
+			auth: {
+				authorizeHost: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationBaseUrl,
+				authorizePath: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationEndpoint,
+				tokenHost: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenBaseUrl,
+				tokenPath: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenEndpoint
+			}
+		};
+		return createOAuth(credentials);
+	}
+
+	//------------------------------------------Redirects------------------------------------------
+
+	createRedirectEndpoints(): void {
+		//Add plugins necessary for Passport
+		this.server.use(restify.plugins.queryParser());
+		this.server.use(restify.plugins.bodyParser());
+		//Create redirect endpoint for login failure 
+		this.server.get('/auth/failure', (req: Request, res: Response) => {
+			res.send(`Authentication Failed`);
+		});
+		//Create redirect endpoint for login success 
+		this.server.get('/auth/callback', (req: Request, res: Response) => {
+			let code: string | undefined = req.query.code;
+			let magicCode: string = this.generateMagicCode();
+			//Providers using Passport do not have a code in the query string, those using OAuth do
+			if (!code) {
+				res.send(`Please enter the code into the bot: ${magicCode}`);
+			} else {
+				//Providers using OAuth must exchange the authorization code for access token
+				const tokenConfig = {
+					code: code,
+					redirect_uri: this.callbackURL
+				};
+				//Parse the selected provider passed over in query string state (from card)
+				let selectedOAuthClient: OAuthClient;
+				switch (req.query.state) {
+					case ProviderType.ActiveDirectory:
+						selectedOAuthClient = this.oauthClients.activeDirectory;
+						this.selectedProvider = ProviderType.ActiveDirectory;
+						break;
+					case ProviderType.Github:
+						selectedOAuthClient = this.oauthClients.github;
+						this.selectedProvider = ProviderType.Github;
+						break;
+					default:
+						selectedOAuthClient = this.oauthClients.activeDirectory;
+						this.selectedProvider = ProviderType.ActiveDirectory;
+						break;
+				}
+				//Exchange the authorization code for the access token
+				selectedOAuthClient.authorizationCode.getToken(tokenConfig)
+					.then((result: any) => {
+						const accessToken: AccessToken = selectedOAuthClient.accessToken.create(result);
+						this.currentAccessToken = accessToken.token['access_token'] as string;
+						res.send(`Please enter the code into the bot: ${magicCode}`);
+					})
+					.catch((error: any) => {
+						console.log('Access Token Error', error);
+					});
+			}
+		});
 	}
 }
