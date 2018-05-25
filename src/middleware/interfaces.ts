@@ -39,7 +39,6 @@ export interface ProviderDefaults {
 //----------------------OAuth Endpoints------------------------//
 
 export interface OAuthEndpointsConfiguration {
-	facebook: OAuthEndpoints;
 	activeDirectory: OAuthEndpoints;
 	github: OAuthEndpoints;
 }

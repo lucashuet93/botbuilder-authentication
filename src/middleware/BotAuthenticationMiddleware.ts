@@ -180,16 +180,18 @@ export class BotAuthenticationMiddleware {
 
 	createOAuthClient(provider: ProviderType): OAuthClient {
 		//Take the provided client id and secret with the provider's default oauth endpoints to create an OAuth client
+		let providerConfig: ProviderConfiguration = provider === ProviderType.ActiveDirectory ? this.authenticationConfig.activeDirectory! : this.authenticationConfig.github!;
+		let oauthEndpoints: OAuthEndpoints = provider === ProviderType.ActiveDirectory ? this.oauthEndpoints.activeDirectory : this.oauthEndpoints.github;		
 		const credentials: ModuleOptions = {
 			client: {
-				id: (this.authenticationConfig[provider] as ProviderConfiguration).clientId,
-				secret: (this.authenticationConfig[provider] as ProviderConfiguration).clientSecret
+				id: providerConfig.clientId,
+				secret: providerConfig.clientSecret
 			},
 			auth: {
-				authorizeHost: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationBaseUrl,
-				authorizePath: (this.oauthEndpoints[provider] as OAuthEndpoints).authorizationEndpoint,
-				tokenHost: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenBaseUrl,
-				tokenPath: (this.oauthEndpoints[provider] as OAuthEndpoints).tokenEndpoint
+				authorizeHost: oauthEndpoints.authorizationBaseUrl,
+				authorizePath: oauthEndpoints.authorizationEndpoint,
+				tokenHost: oauthEndpoints.tokenBaseUrl,
+				tokenPath: oauthEndpoints.tokenEndpoint
 			}
 		};
 		return createOAuth(credentials);

@@ -16,12 +16,6 @@ export const providerDefaultOptions: ProviderDefaultOptions = {
 }
 
 export const oauthEndpoints: OAuthEndpointsConfiguration = {
-	facebook: {
-		tokenBaseUrl: 'https://graph.facebook.com',
-		tokenEndpoint: '/v3.0/oauth/access_token',
-		authorizationBaseUrl: 'https://www.facebook.com',
-		authorizationEndpoint: '/v3.0/dialog/oauth'
-	},
 	activeDirectory: {
 		tokenBaseUrl: 'https://login.microsoftonline.com',
 		tokenEndpoint: '/common/oauth2/v2.0/token',
