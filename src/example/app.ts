@@ -1,6 +1,6 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
-import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, AccessToken, ProviderType } from '../botbuilder-authentication';
+import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, AccessToken, ProviderType } from '../botbuilder-simple-authentication';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
