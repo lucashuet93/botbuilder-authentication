@@ -8,7 +8,7 @@ export { AccessToken } from 'simple-oauth2';
 
 export interface BotAuthenticationConfiguration {
 	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
-	onLoginSuccess: (context: TurnContext, accessToken: AccessToken, provider: ProviderType) => Promise<void> | void;
+	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
 	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
