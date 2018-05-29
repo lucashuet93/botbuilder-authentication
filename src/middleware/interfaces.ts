@@ -2,8 +2,6 @@ import { TurnContext, Activity } from 'botbuilder';
 import { AccessToken } from 'simple-oauth2';
 import { ProviderType } from './enums';
 
-export { AccessToken } from 'simple-oauth2';
-
 //----------------------------Config-------------------------//
 
 export interface BotAuthenticationConfiguration {
@@ -11,11 +9,11 @@ export interface BotAuthenticationConfiguration {
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
 	createCustomAuthenticationCard?: (context: TurnContext, authorizationUris: AuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
-	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
 	activeDirectory?: ProviderConfiguration;
 	google?: ProviderConfiguration;
 	github?: ProviderConfiguration;
+	noUserFoundMessage?: string;
 }
 
 export interface ProviderConfiguration {

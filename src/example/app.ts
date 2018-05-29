@@ -1,7 +1,6 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
-import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, AccessToken, ProviderType } from '../botbuilder-simple-authentication';
-import { AuthorizationUri } from '../middleware/interfaces';
+import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, AuthorizationUri } from '../botbuilder-simple-authentication';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
@@ -50,25 +49,6 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		state.isAuthenticated = false;
 		await context.sendActivity("Login failed.")
 	},
-	createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: AuthorizationUri[]): Promise<Partial<Activity>> => {
-		let cardActions: CardAction[] = [];
-		let buttonTitle: string;
-		authorizationUris.map((a: AuthorizationUri) => {
-			if (a.provider === ProviderType.ActiveDirectory) {
-				buttonTitle = 'Log in with Microsoft';
-			} else if (a.provider === ProviderType.Facebook) {
-				buttonTitle = 'Log in with Facebook';
-			} else if (a.provider === ProviderType.Google) {
-				buttonTitle = 'Log in with Google';
-			} else if (a.provider === ProviderType.Github) {
-				buttonTitle = 'Log in with GitHub';
-			}
-			cardActions.push({ type: "openUrl", value: a.authorizationUri, title: buttonTitle });
-		});
-		let card: Attachment = CardFactory.thumbnailCard("Hmm, it doesn't look like I have you authenticated...", undefined, cardActions);
-		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
-		return authMessage;
-	},
 	facebook: {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24'
@@ -84,8 +64,27 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	github: {
 		clientId: 'f998ca5d45caba4cfac2',
 		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
-	}
-}
+	},
+	// createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: AuthorizationUri[]): Promise<Partial<Activity>> => {
+	// 	let cardActions: CardAction[] = [];
+	// 	let buttonTitle: string;
+	// 	authorizationUris.map((a: AuthorizationUri) => {
+	// 		if (a.provider === ProviderType.ActiveDirectory) {
+	// 			buttonTitle = 'Log in with Microsoft';
+	// 		} else if (a.provider === ProviderType.Facebook) {
+	// 			buttonTitle = 'Log in with Facebook';
+	// 		} else if (a.provider === ProviderType.Google) {
+	// 			buttonTitle = 'Log in with Google';
+	// 		} else if (a.provider === ProviderType.Github) {
+	// 			buttonTitle = 'Log in with GitHub';
+	// 		}
+	// 		cardActions.push({ type: "openUrl", value: a.authorizationUri, title: buttonTitle });
+	// 	});
+	// 	let card: Attachment = CardFactory.thumbnailCard("Hmm, it doesn't look like I have you authenticated...", undefined, cardActions);
+	// 	let authMessage: Partial<Activity> = MessageFactory.attachment(card);
+	// 	return authMessage;
+	// }
+};
 
 adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
 
