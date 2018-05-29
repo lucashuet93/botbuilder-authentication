@@ -8,7 +8,7 @@ export interface BotAuthenticationConfiguration {
 	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
-	createCustomAuthenticationCard?: (context: TurnContext, authorizationUris: AuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
+	createCustomAuthenticationCard?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
 	facebook?: ProviderConfiguration;
 	activeDirectory?: ProviderConfiguration;
 	google?: ProviderConfiguration;
@@ -25,7 +25,7 @@ export interface ProviderConfiguration {
 
 //------------------Authorization Uris-------------------//
 
-export interface AuthorizationUri {
+export interface ProviderAuthorizationUri {
 	provider: ProviderType;
 	authorizationUri: string;
 }

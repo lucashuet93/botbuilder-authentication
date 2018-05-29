@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 import * as restify from 'restify';
 import { Server, Request, Response, RequestHandler, RequestHandlerType } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
-import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderDefaultOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, AuthorizationUri } from './interfaces';
+import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderDefaultOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, ProviderAuthorizationUri } from './interfaces';
 import { ProviderType } from './enums';
 import { providerDefaultOptions, oauthEndpoints } from './constants';
 import * as passport from 'passport-restify';
@@ -36,8 +36,8 @@ export class BotAuthenticationMiddleware {
 		this.oauthEndpoints = oauthEndpoints;
 		this.callbackURL = 'http://localhost:3978/auth/callback';
 		this.createRedirectEndpoints();
-		this.createOAuthClientObject();
-		this.setUpPassport();
+		this.initializeOAuth();
+		this.initializePassport();
 	}
 
 	async onTurn(context: TurnContext, next: Function) {
@@ -92,23 +92,23 @@ export class BotAuthenticationMiddleware {
 	async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
 		if (this.authenticationConfig.createCustomAuthenticationCard) {
 			//Pass the proper authorization uris back to the user
-			let authorizationUris: AuthorizationUri[] = [];
+			let authorizationUris: ProviderAuthorizationUri[] = [];
 			if (this.authenticationConfig.facebook) {
-				let facebookAuthorizationUri: AuthorizationUri = {
+				let facebookAuthorizationUri: ProviderAuthorizationUri = {
 					provider: ProviderType.Facebook,
 					authorizationUri: 'http://localhost:3978/auth/facebook'
 				};
 				authorizationUris.push(facebookAuthorizationUri);
 			}
 			if (this.authenticationConfig.google) {
-				let googleAuthorizationUri: AuthorizationUri = {
+				let googleAuthorizationUri: ProviderAuthorizationUri = {
 					provider: ProviderType.Google,
 					authorizationUri: 'http://localhost:3978/auth/google'
 				};
 				authorizationUris.push(googleAuthorizationUri);
 			}
 			if (this.authenticationConfig.activeDirectory) {
-				let adAuthorizationUri: AuthorizationUri = {
+				let adAuthorizationUri: ProviderAuthorizationUri = {
 					provider: ProviderType.ActiveDirectory,
 					authorizationUri: this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
 						redirect_uri: this.callbackURL,
@@ -119,7 +119,7 @@ export class BotAuthenticationMiddleware {
 				authorizationUris.push(adAuthorizationUri);
 			}
 			if (this.authenticationConfig.github) {
-				let githubAuthorizationUri: AuthorizationUri = {
+				let githubAuthorizationUri: ProviderAuthorizationUri = {
 					provider: ProviderType.Github,
 					authorizationUri: this.oauthClients.github.authorizationCode.authorizeURL({
 						redirect_uri: this.callbackURL,
@@ -175,7 +175,7 @@ export class BotAuthenticationMiddleware {
 
 	//Used for Facebook, Google, and Twitter
 
-	setUpPassport() {
+	initializePassport() {
 		//Initialize Passport
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
@@ -233,7 +233,7 @@ export class BotAuthenticationMiddleware {
 
 	//Used for Active Directory and Github
 
-	createOAuthClientObject(): void {
+	initializeOAuth(): void {
 		//Initialize OAuthClients - overcome javascript errors without adding nullability
 		let initializationModule: ModuleOptions = {
 			client: { id: '', secret: '', },

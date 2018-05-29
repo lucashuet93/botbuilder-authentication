@@ -1,6 +1,6 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
-import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, AuthorizationUri } from '../botbuilder-simple-authentication';
+import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../botbuilder-simple-authentication';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
@@ -65,10 +65,10 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		clientId: 'f998ca5d45caba4cfac2',
 		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
 	},
-	// createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: AuthorizationUri[]): Promise<Partial<Activity>> => {
+	// createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]): Promise<Partial<Activity>> => {
 	// 	let cardActions: CardAction[] = [];
 	// 	let buttonTitle: string;
-	// 	authorizationUris.map((a: AuthorizationUri) => {
+	// 	authorizationUris.map((a: ProviderAuthorizationUri) => {
 	// 		if (a.provider === ProviderType.ActiveDirectory) {
 	// 			buttonTitle = 'Log in with Microsoft';
 	// 		} else if (a.provider === ProviderType.Facebook) {
