@@ -1,6 +1,7 @@
-import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem } from 'botbuilder';
+import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
 import { createServer, Server, Request, Response } from 'restify';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, AccessToken, ProviderType } from '../botbuilder-simple-authentication';
+import { AuthorizationUri } from '../middleware/interfaces';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
@@ -42,12 +43,31 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.isAuthenticated = true;
 		console.log("ACCESS TOKEN", accessToken, provider)
-		await context.sendActivity("You're logged in!")		
+		await context.sendActivity("You're logged in!")
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.isAuthenticated = false;
 		await context.sendActivity("Login failed.")
+	},
+	createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: AuthorizationUri[]): Promise<Partial<Activity>> => {
+		let cardActions: CardAction[] = [];
+		let buttonTitle: string;
+		authorizationUris.map((a: AuthorizationUri) => {
+			if (a.provider === ProviderType.ActiveDirectory) {
+				buttonTitle = 'Log in with Microsoft';
+			} else if (a.provider === ProviderType.Facebook) {
+				buttonTitle = 'Log in with Facebook';
+			} else if (a.provider === ProviderType.Google) {
+				buttonTitle = 'Log in with Google';
+			} else if (a.provider === ProviderType.Github) {
+				buttonTitle = 'Log in with GitHub';
+			}
+			cardActions.push({ type: "openUrl", value: a.authorizationUri, title: buttonTitle });
+		});
+		let card: Attachment = CardFactory.thumbnailCard("Hmm, it doesn't look like I have you authenticated...", undefined, cardActions);
+		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
+		return authMessage;
 	},
 	facebook: {
 		clientId: '174907033110091',
@@ -57,13 +77,13 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
 		clientSecret: 'bhchfIQN348[^foKKOG54||'
 	},
-	github: {
-		clientId: 'f998ca5d45caba4cfac2',
-		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
-	},
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',
 		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb'
+	},
+	github: {
+		clientId: 'f998ca5d45caba4cfac2',
+		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
 	}
 }
 

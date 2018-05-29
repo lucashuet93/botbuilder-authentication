@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 import * as restify from 'restify';
 import { Server, Request, Response, RequestHandler, RequestHandlerType } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
-import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderDefaultOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints } from './interfaces';
+import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderDefaultOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, AuthorizationUri } from './interfaces';
 import { ProviderType } from './enums';
 import { providerDefaultOptions, oauthEndpoints } from './constants';
 import * as passport from 'passport-restify';
@@ -48,7 +48,7 @@ export class BotAuthenticationMiddleware {
 					if (this.authenticationConfig.noUserFoundMessage) {
 						await context.sendActivity(this.authenticationConfig.noUserFoundMessage);
 					}
-					await context.sendActivity(this.createAuthenticationCard(context))
+					await context.sendActivity(await this.createAuthenticationCard(context))
 				} else {
 					await this.handleMagicCode(context);
 				}
@@ -89,44 +89,86 @@ export class BotAuthenticationMiddleware {
 		return magicCode;
 	}
 
-	createAuthenticationCard = (context: TurnContext): Partial<Activity> => {
-		//Add buttons for each provider the user passed configuration options for
-		let cardActions: CardAction[] = [];
-		if (this.authenticationConfig.facebook) {
-			let facebookAuthorizationUrl: string = 'http://localhost:3978/auth/facebook';
-			let facebookButtonTitle: string = this.authenticationConfig.facebook.buttonText ? this.authenticationConfig.facebook.buttonText : providerDefaultOptions.facebook.buttonText;
-			let facebookButton: CardAction = { type: "openUrl", value: facebookAuthorizationUrl, title: facebookButtonTitle };
-			cardActions.push(facebookButton);
+	async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
+		if (this.authenticationConfig.createCustomAuthenticationCard) {
+			//Pass the proper authorization uris back to the user
+			let authorizationUris: AuthorizationUri[] = [];
+			if (this.authenticationConfig.facebook) {
+				let facebookAuthorizationUri: AuthorizationUri = {
+					provider: ProviderType.Facebook,
+					authorizationUri: 'http://localhost:3978/auth/facebook'
+				};
+				authorizationUris.push(facebookAuthorizationUri);
+			}
+			if (this.authenticationConfig.google) {
+				let googleAuthorizationUri: AuthorizationUri = {
+					provider: ProviderType.Google,
+					authorizationUri: 'http://localhost:3978/auth/google'
+				};
+				authorizationUris.push(googleAuthorizationUri);
+			}
+			if (this.authenticationConfig.activeDirectory) {
+				let adAuthorizationUri: AuthorizationUri = {
+					provider: ProviderType.ActiveDirectory,
+					authorizationUri: this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
+						redirect_uri: this.callbackURL,
+						scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : providerDefaultOptions.activeDirectory.scopes,
+						state: ProviderType.ActiveDirectory
+					})
+				};
+				authorizationUris.push(adAuthorizationUri);
+			}
+			if (this.authenticationConfig.github) {
+				let githubAuthorizationUri: AuthorizationUri = {
+					provider: ProviderType.Github,
+					authorizationUri: this.oauthClients.github.authorizationCode.authorizeURL({
+						redirect_uri: this.callbackURL,
+						scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : providerDefaultOptions.github.scopes,
+						state: ProviderType.Github
+					})
+				};
+				authorizationUris.push(githubAuthorizationUri);
+			}
+			return await this.authenticationConfig.createCustomAuthenticationCard(context, authorizationUris);
+		} else {
+			//Add buttons for each provider the user passed configuration options for			
+			let cardActions: CardAction[] = [];
+			if (this.authenticationConfig.facebook) {
+				let facebookAuthorizationUrl: string = 'http://localhost:3978/auth/facebook';
+				let facebookButtonTitle: string = this.authenticationConfig.facebook.buttonText ? this.authenticationConfig.facebook.buttonText : providerDefaultOptions.facebook.buttonText;
+				let facebookButton: CardAction = { type: "openUrl", value: facebookAuthorizationUrl, title: facebookButtonTitle };
+				cardActions.push(facebookButton);
+			}
+			if (this.authenticationConfig.google) {
+				let googleAuthorizationUrl: string = 'http://localhost:3978/auth/google';
+				let googleButtonTitle: string = this.authenticationConfig.google.buttonText ? this.authenticationConfig.google.buttonText : providerDefaultOptions.google.buttonText;
+				let googleButton: CardAction = { type: "openUrl", value: googleAuthorizationUrl, title: googleButtonTitle };
+				cardActions.push(googleButton);
+			}
+			if (this.authenticationConfig.activeDirectory) {
+				let adAuthorizationUri: string = this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
+					redirect_uri: this.callbackURL,
+					scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : providerDefaultOptions.activeDirectory.scopes,
+					state: ProviderType.ActiveDirectory
+				});
+				let adButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : providerDefaultOptions.activeDirectory.buttonText;
+				let adButton: CardAction = { type: "openUrl", value: adAuthorizationUri, title: adButtonTitle };
+				cardActions.push(adButton);
+			}
+			if (this.authenticationConfig.github) {
+				let githubAuthorizationUri: string = this.oauthClients.github.authorizationCode.authorizeURL({
+					redirect_uri: this.callbackURL,
+					scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : providerDefaultOptions.github.scopes,
+					state: ProviderType.Github
+				});
+				let githubButtonTitle: string = this.authenticationConfig.github.buttonText ? this.authenticationConfig.github.buttonText : providerDefaultOptions.github.buttonText;
+				let githubButton: CardAction = { type: "openUrl", value: githubAuthorizationUri, title: githubButtonTitle };
+				cardActions.push(githubButton);
+			}
+			let card: Attachment = CardFactory.thumbnailCard("", undefined, cardActions);
+			let authMessage: Partial<Activity> = MessageFactory.attachment(card);
+			return authMessage;
 		}
-		if (this.authenticationConfig.google) {
-			let googleAuthorizationUrl: string = 'http://localhost:3978/auth/google';
-			let googleButtonTitle: string = this.authenticationConfig.google.buttonText ? this.authenticationConfig.google.buttonText : providerDefaultOptions.google.buttonText;
-			let googleButton: CardAction = { type: "openUrl", value: googleAuthorizationUrl, title: googleButtonTitle };
-			cardActions.push(googleButton);
-		}
-		if (this.authenticationConfig.activeDirectory) {
-			let adAuthorizationUri: string = this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
-				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : providerDefaultOptions.activeDirectory.scopes,
-				state: ProviderType.ActiveDirectory
-			});
-			let adButtonTitle: string = this.authenticationConfig.activeDirectory.buttonText ? this.authenticationConfig.activeDirectory.buttonText : providerDefaultOptions.activeDirectory.buttonText;
-			let adButton: CardAction = { type: "openUrl", value: adAuthorizationUri, title: adButtonTitle };
-			cardActions.push(adButton);
-		}
-		if (this.authenticationConfig.github) {
-			let githubAuthorizationUri: string = this.oauthClients.github.authorizationCode.authorizeURL({
-				redirect_uri: this.callbackURL,
-				scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : providerDefaultOptions.github.scopes,
-				state: ProviderType.Github
-			});
-			let githubButtonTitle: string = this.authenticationConfig.github.buttonText ? this.authenticationConfig.github.buttonText : providerDefaultOptions.github.buttonText;
-			let githubButton: CardAction = { type: "openUrl", value: githubAuthorizationUri, title: githubButtonTitle };
-			cardActions.push(githubButton);
-		}
-		let card: Attachment = CardFactory.thumbnailCard("", undefined, cardActions);
-		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
-		return authMessage;
 	}
 
 	//------------------------------------------Passport------------------------------------------
@@ -186,7 +228,7 @@ export class BotAuthenticationMiddleware {
 				}));
 		}
 	}
-	
+
 	//------------------------------------------OAuth------------------------------------------
 
 	//Used for Active Directory and Github
@@ -209,7 +251,7 @@ export class BotAuthenticationMiddleware {
 	createOAuthClient(provider: ProviderType): OAuthClient {
 		//Take the provided client id and secret with the provider's default oauth endpoints to create an OAuth client
 		let providerConfig: ProviderConfiguration = provider === ProviderType.ActiveDirectory ? this.authenticationConfig.activeDirectory! : this.authenticationConfig.github!;
-		let oauthEndpoints: OAuthEndpoints = provider === ProviderType.ActiveDirectory ? this.oauthEndpoints.activeDirectory : this.oauthEndpoints.github;		
+		let oauthEndpoints: OAuthEndpoints = provider === ProviderType.ActiveDirectory ? this.oauthEndpoints.activeDirectory : this.oauthEndpoints.github;
 		const credentials: ModuleOptions = {
 			client: {
 				id: providerConfig.clientId,

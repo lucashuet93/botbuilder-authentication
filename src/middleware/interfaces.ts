@@ -1,4 +1,4 @@
-import { TurnContext } from 'botbuilder';
+import { TurnContext, Activity } from 'botbuilder';
 import { AccessToken } from 'simple-oauth2';
 import { ProviderType } from './enums';
 
@@ -10,6 +10,7 @@ export interface BotAuthenticationConfiguration {
 	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
+	createCustomAuthenticationCard?: (context: TurnContext, authorizationUris: AuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
 	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
 	activeDirectory?: ProviderConfiguration;
@@ -22,6 +23,13 @@ export interface ProviderConfiguration {
 	clientSecret: string;
 	scopes?: string[];
 	buttonText?: string;
+}
+
+//------------------Authorization Uris-------------------//
+
+export interface AuthorizationUri {
+	provider: ProviderType;
+	authorizationUri: string;
 }
 
 //------------------Provider Default Options-------------------//
