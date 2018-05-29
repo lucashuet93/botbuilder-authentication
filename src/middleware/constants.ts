@@ -9,10 +9,14 @@ export const providerDefaultOptions: ProviderDefaultOptions = {
 		scopes: ['User.Read'],
 		buttonText: 'Log in with Microsoft'
 	},
+	google: {
+		scopes: ['https://www.googleapis.com/auth/plus.login'],
+		buttonText: 'Log in with Google+'
+	},
 	github: {
 		scopes: ['user'],
 		buttonText: 'Log in with GitHub'
-	},
+	}
 }
 
 export const oauthEndpoints: OAuthEndpointsConfiguration = {

@@ -9,6 +9,7 @@ import { ProviderType } from './enums';
 import { providerDefaultOptions, oauthEndpoints } from './constants';
 import * as passport from 'passport-restify';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
+import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 
 export class BotAuthenticationMiddleware {
 
@@ -97,6 +98,12 @@ export class BotAuthenticationMiddleware {
 			let facebookButton: CardAction = { type: "openUrl", value: facebookAuthorizationUrl, title: facebookButtonTitle };
 			cardActions.push(facebookButton);
 		}
+		if (this.authenticationConfig.google) {
+			let googleAuthorizationUrl: string = 'http://localhost:3978/auth/google';
+			let googleButtonTitle: string = this.authenticationConfig.google.buttonText ? this.authenticationConfig.google.buttonText : providerDefaultOptions.google.buttonText;
+			let googleButton: CardAction = { type: "openUrl", value: googleAuthorizationUrl, title: googleButtonTitle };
+			cardActions.push(googleButton);
+		}
 		if (this.authenticationConfig.activeDirectory) {
 			let adAuthorizationUri: string = this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
 				redirect_uri: this.callbackURL,
@@ -157,6 +164,27 @@ export class BotAuthenticationMiddleware {
 					failureRedirect: '/auth/failure'
 				}));
 		}
+
+		//Google
+		if (this.authenticationConfig.google) {
+			passport.use(new GoogleStrategy({
+				clientID: this.authenticationConfig.google!.clientId,
+				clientSecret: this.authenticationConfig.google!.clientSecret,
+				callbackURL: 'http://localhost:3978/auth/google/callback'
+			}, (accessToken: string, refreshToken: string, profile: GoogleProfile, done: Function) => {
+				//store the access token on successful login (runs before successRedirect)
+				this.currentAccessToken = accessToken;
+				this.selectedProvider = ProviderType.Google;
+				done(null, profile);
+			}));
+			let googleScope: string[] = this.authenticationConfig.google.scopes ? this.authenticationConfig.google.scopes : providerDefaultOptions.google.scopes;
+			this.server.get('/auth/google', passport.authenticate('google', { scope: googleScope }));
+			this.server.get('/auth/google/callback',
+				passport.authenticate('google', {
+					successRedirect: '/auth/callback',
+					failureRedirect: '/auth/failure'
+				}));
+		}
 	}
 	
 	//------------------------------------------OAuth------------------------------------------
@@ -211,8 +239,9 @@ export class BotAuthenticationMiddleware {
 		this.server.get('/auth/callback', (req: Request, res: Response) => {
 			let code: string | undefined = req.query.code;
 			let magicCode: string = this.generateMagicCode();
-			//Providers using Passport do not have a code in the query string, those using OAuth do
+			//Providers using Passport do not have a code in the query string, those using OAuth do.
 			if (!code) {
+				//Providers using Passport have already exchanged the authorization code for an access token
 				res.send(`Please enter the code into the bot: ${magicCode}`);
 			} else {
 				//Providers using OAuth must exchange the authorization code for access token

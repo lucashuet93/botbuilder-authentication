@@ -13,6 +13,7 @@ export interface BotAuthenticationConfiguration {
 	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
 	activeDirectory?: ProviderConfiguration;
+	google?: ProviderConfiguration;
 	github?: ProviderConfiguration;
 }
 
@@ -28,6 +29,7 @@ export interface ProviderConfiguration {
 export interface ProviderDefaultOptions {
 	facebook: ProviderDefaults;
 	activeDirectory: ProviderDefaults;
+	google: ProviderDefaults;
 	github: ProviderDefaults;
 }
 
