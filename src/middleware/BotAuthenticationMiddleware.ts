@@ -1,15 +1,15 @@
-
+import * as restify from 'restify';
+import * as passport from 'passport-restify';
+import * as dotenv from 'dotenv';
 import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken, Token } from 'simple-oauth2';
 import { randomBytes } from 'crypto';
-import * as restify from 'restify';
 import { Server, Request, Response, RequestHandler, RequestHandlerType } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
+import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
+import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderDefaultOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, ProviderAuthorizationUri } from './interfaces';
 import { ProviderType } from './enums';
 import { providerDefaultOptions, oauthEndpoints } from './constants';
-import * as passport from 'passport-restify';
-import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
-import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 
 export class BotAuthenticationMiddleware {
 
@@ -35,9 +35,10 @@ export class BotAuthenticationMiddleware {
 		this.authenticationConfig = authenticationConfig;
 		this.oauthEndpoints = oauthEndpoints;
 		this.callbackURL = 'http://localhost:3978/auth/callback';
-		this.createRedirectEndpoints();
+		this.initializeEnvironmentVariables();
 		this.initializeOAuth();
 		this.initializePassport();
+		this.createRedirectEndpoints();
 	}
 
 	async onTurn(context: TurnContext, next: Function) {
@@ -319,5 +320,45 @@ export class BotAuthenticationMiddleware {
 					});
 			}
 		});
+	}
+
+	initializeEnvironmentVariables() {
+		//pull the environment variables provided and update the authentication configuration accordingly
+		let environment: string = process.env.NODE_ENV || 'development';
+		if (environment === 'development') {
+			dotenv.load();
+		}
+		if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
+			this.authenticationConfig = {
+				...this.authenticationConfig, facebook: {
+					clientId: process.env.FACEBOOK_CLIENT_ID as string,
+					clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string
+				}
+			}
+		}
+		if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+			this.authenticationConfig = {
+				...this.authenticationConfig, google: {
+					clientId: process.env.GOOGLE_CLIENT_ID as string,
+					clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
+				}
+			}
+		}
+		if (process.env.ACTIVE_DIRECTORY_CLIENT_ID && process.env.ACTIVE_DIRECTORY_CLIENT_SECRET) {
+			this.authenticationConfig = {
+				...this.authenticationConfig, activeDirectory: {
+					clientId: process.env.ACTIVE_DIRECTORY_CLIENT_ID as string,
+					clientSecret: process.env.ACTIVE_DIRECTORY_CLIENT_SECRET as string
+				}
+			}
+		}
+		if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+			this.authenticationConfig = {
+				...this.authenticationConfig, github: {
+					clientId: process.env.GITHUB_CLIENT_ID as string,
+					clientSecret: process.env.GITHUB_CLIENT_SECRET as string
+				}
+			}
+		}
 	}
 }

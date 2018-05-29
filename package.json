@@ -9,6 +9,7 @@
   "author": "Lucas Huet-Hudson",
   "license": "ISC",
   "dependencies": {
+    "@types/dotenv": "^4.0.3",
     "@types/es6-promise": "^3.3.0",
     "@types/passport": "^0.4.5",
     "@types/passport-facebook": "^2.1.8",
@@ -17,6 +18,7 @@
     "@types/simple-oauth2": "^1.1.1",
     "botbuilder": "^4.0.0-preview1.2",
     "crypto": "^1.0.1",
+    "dotenv": "^5.0.1",
     "passport": "^0.4.0",
     "passport-facebook": "^2.1.1",
     "passport-google-oauth": "^1.0.0",
