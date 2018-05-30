@@ -12,18 +12,18 @@
 
 #### BotAuthenticationConfiguration
 
-| Property                        | Constraint    | Type                                                                  |
-| ------------------------------- | ------------- | --------------------------------------------------------------------- |
-| isUserAuthenticated             | Required      | (context: TurnContext) => boolean                                     |
-| onLoginSuccess                  | Required      | (context: TurnContext, accessToken: string, provider: string) => void |
-| onLoginFailure                  | Required      | (context: TurnContext, provider: string) => void                      |
-| createCustomAuthenticationCard  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >|
-| customMagicCodeRedirectEndpoint | Optional      | string                                                                |
-| noUserFoundMessage              | Optional      | string                                                                |
-| facebook                        | Optional      | ProviderConfiguration                                                 |
-| activeDirectory                 | Optional      | ProviderConfiguration                                                 |
-| google                          | Optional      | ProviderConfiguration                                                 |
-| github                          | Optional      | ProviderConfiguration                                                 |
+| Property                           | Constraint    | Type                                                                  |
+| ---------------------------------- | ------------- | --------------------------------------------------------------------- |
+| isUserAuthenticated                | Required      | (context: TurnContext) => boolean                                     |
+| onLoginSuccess                     | Required      | (context: TurnContext, accessToken: string, provider: string) => void |
+| onLoginFailure                     | Required      | (context: TurnContext, provider: string) => void                      |
+| customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >|
+| customMagicCodeRedirectEndpoint    | Optional      | string                                                                |
+| noUserFoundMessage                 | Optional      | string                                                                |
+| facebook                           | Optional      | ProviderConfiguration                                                 |
+| activeDirectory                    | Optional      | ProviderConfiguration                                                 |
+| google                             | Optional      | ProviderConfiguration                                                 |
+| github                             | Optional      | ProviderConfiguration                                                 |
 
 #### ProviderConfiguration
 

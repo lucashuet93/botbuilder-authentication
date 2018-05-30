@@ -69,7 +69,7 @@ const authenticationConfig = {
 		scopes: ['user', 'notifications']
 	},
 	noUserFoundMessage: `Please select an authentication provider...`,
-	createCustomAuthenticationCard: async (context, authorizationUris) => {
+	customAuthenticationCardGenerator: async (context, authorizationUris) => {
 		let cardActions = [];
 		let buttonTitle;
 		authorizationUris.map((auth) => {

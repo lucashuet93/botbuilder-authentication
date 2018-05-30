@@ -69,7 +69,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		scopes: ['user', 'notifications']
 	},
 	noUserFoundMessage: `Please select an authentication provider...`,
-	createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]): Promise<Partial<Activity>> => {
+	customAuthenticationCardGenerator: async (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]): Promise<Partial<Activity>> => {
 		let cardActions: CardAction[] = [];
 		let buttonTitle: string;
 		authorizationUris.map((auth: ProviderAuthorizationUri) => {

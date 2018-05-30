@@ -9,13 +9,13 @@ export interface BotAuthenticationConfiguration {
 	isUserAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
-	createCustomAuthenticationCard?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
+	customAuthenticationCardGenerator?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
+	customMagicCodeRedirectEndpoint?: string; 
+	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
 	activeDirectory?: ProviderConfiguration;
 	google?: ProviderConfiguration;
 	github?: ProviderConfiguration;
-	noUserFoundMessage?: string;
-	customMagicCodeRedirectEndpoint?: string; 
 }
 
 export interface ProviderConfiguration {

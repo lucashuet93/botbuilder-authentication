@@ -344,9 +344,9 @@ export class BotAuthenticationMiddleware {
 
 	async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
 		let authorizationUris: ProviderAuthorizationUri[] = this.createAuthorizationUris();
-		if (this.authenticationConfig.createCustomAuthenticationCard) {
+		if (this.authenticationConfig.customAuthenticationCardGenerator) {
 			//immediately pass the authorization uris to the user for custom cards
-			return await this.authenticationConfig.createCustomAuthenticationCard(context, authorizationUris);
+			return await this.authenticationConfig.customAuthenticationCardGenerator(context, authorizationUris);
 		} else {
 			//add buttons for each provider the user passed configuration options for, or use the default options			
 			let cardActions: CardAction[] = [];
