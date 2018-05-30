@@ -89,15 +89,16 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 };
 
 server.get('/customCode', (req: Request, res: Response, next: Next) => {
+	//simple redirect where we set the code in the hash and pull it down on the webpage that restify will serve at this endpoint
 	let magicCode: string = req.query.magicCode;
 	let hashedUrl = `/renderCustomCode#${magicCode}`;
-	console.log('here')
 	res.redirect(302, hashedUrl, next);
 });
 
 server.get('/renderCustomCode', plugins.serveStatic({
+	//need a public folder in the same directory as this file that contains an index.html page expecting a hash
 	'directory': path.join(__dirname, 'public'),
-	'file': 'code.html'
+	'file': 'index.html'
 }));
 
 adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));

@@ -23,7 +23,7 @@ server.post('/api/messages', (req: Request, res: Response) => {
 			await context.sendActivity(`You said ${context.activity.text}`)
 		}
 	})
-})
+});
 
 //----------------------------------------- USAGE --------------------------------------------------------//
 
