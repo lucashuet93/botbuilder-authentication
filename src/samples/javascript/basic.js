@@ -14,7 +14,8 @@ let adapter = new builder.BotFrameworkAdapter({
 	appPassword: undefined
 });
 
-const conversationState = new builder.ConversationState(new builder.MemoryStorage());
+let storage = new builder.MemoryStorage();
+const conversationState = new builder.ConversationState(storage);
 adapter.use(conversationState);
 
 server.post('/api/messages', (req, res) => {
@@ -29,6 +30,7 @@ server.post('/api/messages', (req, res) => {
 
 const authenticationConfig = {
 	isUserAuthenticated: (context) => {
+		//if this method returns false, the middleware will take over
 		const state = conversationState.get(context);
 		return state.authData;
 	},

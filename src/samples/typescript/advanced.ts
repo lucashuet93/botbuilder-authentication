@@ -15,7 +15,8 @@ let adapter = new BotFrameworkAdapter({
 	appPassword: undefined
 });
 
-const conversationState = new ConversationState(new MemoryStorage());
+let storage: MemoryStorage = new MemoryStorage();
+const conversationState: ConversationState = new ConversationState(storage);
 adapter.use(conversationState);
 
 server.post('/api/messages', (req: Request, res: Response) => {
