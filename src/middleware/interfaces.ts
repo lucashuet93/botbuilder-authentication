@@ -1,5 +1,6 @@
 import { TurnContext, Activity } from 'botbuilder';
 import { AccessToken } from 'simple-oauth2';
+import { Request, Response, Next } from 'restify';
 import { ProviderType } from './enums';
 
 //--------------------------------------- CONFIGURATION -----------------------------------------//
@@ -14,6 +15,7 @@ export interface BotAuthenticationConfiguration {
 	google?: ProviderConfiguration;
 	github?: ProviderConfiguration;
 	noUserFoundMessage?: string;
+	customMagicCodeRedirectEndpoint?: string; 
 }
 
 export interface ProviderConfiguration {

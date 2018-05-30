@@ -1,9 +1,9 @@
 import * as restify from 'restify';
 import * as passport from 'passport-restify';
 import * as dotenv from 'dotenv';
-import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken, Token } from 'simple-oauth2';
+import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken, Token, AuthorizationTokenConfig } from 'simple-oauth2';
 import { randomBytes } from 'crypto';
-import { Server, Request, Response, RequestHandler, RequestHandlerType } from 'restify';
+import { Server, Request, Response, Next } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
@@ -86,20 +86,20 @@ export class BotAuthenticationMiddleware {
 		this.server.use(restify.plugins.queryParser());
 		this.server.use(restify.plugins.bodyParser());
 		//create redirect endpoint for login failure 
-		this.server.get('/auth/failure', (req: Request, res: Response) => {
+		this.server.get('/auth/failure', (req: Request, res: Response, next: Next) => {
 			res.send(`Authentication Failed`);
 		});
 		//create redirect endpoint for login success 
-		this.server.get('/auth/callback', (req: Request, res: Response) => {
+		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
 			let code: string | undefined = req.query.code;
 			let magicCode: string = this.generateMagicCode();
 			//providers using Passport do not have a code in the query string, those using OAuth do.
 			if (!code) {
 				//providers using Passport have already exchanged the authorization code for an access token
-				res.send(`Please enter the code into the bot: ${magicCode}`);
+				this.renderMagicCode(req, res, next, magicCode);
 			} else {
 				//providers using OAuth must exchange the authorization code for access token
-				const tokenConfig = {
+				const tokenConfig: AuthorizationTokenConfig = {
 					code: code,
 					redirect_uri: this.callbackURL
 				};
@@ -124,7 +124,7 @@ export class BotAuthenticationMiddleware {
 					.then((result: any) => {
 						const accessToken: AccessToken = selectedOAuthClient.accessToken.create(result);
 						this.currentAccessToken = accessToken.token['access_token'] as string;
-						res.send(`Please enter the code into the bot: ${magicCode}`);
+						this.renderMagicCode(req, res, next, magicCode);
 					})
 					.catch((error: any) => {
 						console.log('Access Token Error', error);
@@ -139,6 +139,17 @@ export class BotAuthenticationMiddleware {
 		this.magicCode = magicCode;
 		this.sentCode = true;
 		return magicCode;
+	}
+
+	renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
+		if (this.authenticationConfig.customMagicCodeRedirectEndpoint) {
+			//redirect to provided endpoint with the magic code in the body
+			let url: string = this.authenticationConfig.customMagicCodeRedirectEndpoint + `?magicCode=${magicCode}`;
+			res.redirect(302, url, next);
+		} else {
+			//send vanilla text to the user
+			res.send(`Please enter the code into the bot: ${magicCode}`);
+		}
 	}
 
 	//---------------------------- PASSPORT INIT (Facebook, Google, and Twitter) -----------------------------//
