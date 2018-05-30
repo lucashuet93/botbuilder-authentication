@@ -30,25 +30,20 @@ server.post('/api/messages', (req: Request, res: Response) => {
 const authenticationConfig: BotAuthenticationConfiguration = {
 	userIsAuthenticated: (context: TurnContext): boolean => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		return state.isAuthenticated;
+		return state.authData;
 	},
 	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		state.isAuthenticated = true;
+		state.authData = { accessToken, provider };
 		await context.sendActivity(`You're logged in!`)
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		state.isAuthenticated = false;
 		await context.sendActivity('Login failed.')
 	},
 	facebook: {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24'
-	},
-	activeDirectory: {
-		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
-		clientSecret: 'bhchfIQN348[^foKKOG54||'
 	}
 };
 
