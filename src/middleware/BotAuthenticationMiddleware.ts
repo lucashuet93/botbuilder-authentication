@@ -158,11 +158,13 @@ export class BotAuthenticationMiddleware {
 		//initialize Passport
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
+		// used to serialize the user for the session
 		passport.serializeUser((user: any, done: Function) => {
 			done(null, user);
 		});
-		passport.serializeUser((user: any, done: Function) => {
-			done(null, user);
+		// used to deserialize the user
+		passport.deserializeUser((id: any, done: Function) => {
+			done(null, id);
 		});
 
 		//Facebook
@@ -349,7 +351,6 @@ export class BotAuthenticationMiddleware {
 			//add buttons for each provider the user passed configuration options for, or use the default options			
 			let cardActions: CardAction[] = [];
 			let buttonTitle: string;
-			console.log(this.authenticationConfig);
 			authorizationUris.map((providerAuthUri: ProviderAuthorizationUri) => {
 				if (providerAuthUri.provider === ProviderType.ActiveDirectory) {
 					//we can be sure activeDirectory is not undefined given the Provider Type
