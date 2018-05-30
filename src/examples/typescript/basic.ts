@@ -6,7 +6,7 @@ let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
 
 server.listen(port, () => {
-	console.log(`Magic happening on ${port}`)
+	console.log(`Magic happening on ${port}`);
 });
 
 let adapter = new BotFrameworkAdapter({
@@ -20,9 +20,9 @@ adapter.use(conversationState);
 server.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
-			await context.sendActivity(`You said ${context.activity.text}`)
-		}
-	})
+			await context.sendActivity(`You said ${context.activity.text}`);
+		};
+	});
 });
 
 //----------------------------------------- USAGE --------------------------------------------------------//
@@ -35,11 +35,11 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.authData = { accessToken, provider };
-		await context.sendActivity(`You're logged in!`)
+		await context.sendActivity(`You're logged in!`);
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		await context.sendActivity('Login failed.')
+		await context.sendActivity('Login failed.');
 	},
 	facebook: {
 		clientId: '174907033110091',

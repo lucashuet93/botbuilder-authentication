@@ -7,7 +7,7 @@ let server = restify.createServer();
 let port = process.env.PORT || 3978;
 
 server.listen(port, () => {
-	console.log(`Magic happening on ${port}`)
+	console.log(`Magic happening on ${port}`);
 });
 
 let adapter = new builder.BotFrameworkAdapter({
@@ -24,13 +24,13 @@ server.post('/api/messages', (req, res) => {
 			const state = conversationState.get(context);
 			if (context.activity.text === 'logout') {
 				state.authData = undefined;
-				await context.sendActivity(`You're logged out!`)
+				await context.sendActivity(`You're logged out!`);
 			} else {
-				await context.sendActivity(`You said ${context.activity.text}`)
-			}
-		}
-	})
-})
+				await context.sendActivity(`You said ${context.activity.text}`);
+			};
+		};
+	});
+});
 
 //----------------------------------------- USAGE --------------------------------------------------------//
 
@@ -42,11 +42,11 @@ const authenticationConfig = {
 	onLoginSuccess: async (context, accessToken, provider) => {
 		const state = conversationState.get(context);
 		state.authData = { accessToken, provider };
-		await context.sendActivity(`You're logged in!`)
+		await context.sendActivity(`You're logged in!`);
 	},
 	onLoginFailure: async (context, provider) => {
 		const state = conversationState.get(context);
-		await context.sendActivity('Login failed.')
+		await context.sendActivity('Login failed.');
 	},
 	facebook: {
 		clientId: '174907033110091',
