@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Authentication Bot - Login Success</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+        crossorigin="anonymous">
+
+    <style>
+        body {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .navbar {
+            border-bottom: 3px solid #FFDB00;
+            font-variant: small-caps
+        }
+
+        body {
+            background-color: #EEEEEE;
+        }
+
+        .jumbotron {
+            border: 3px solid #FFDB00;
+            background-color: #333333;
+            color: white;
+        }
+
+        h3 {
+            font-variant: small-caps;
+        }
+
+        logo {
+            margin-bottom: 1em;
+        }
+
+        #magic_code {
+            font-size: 2em;
+            font-family: monospace;
+            font-weight: bold;
+            -moz-user-select: all;
+            -webkit-user-select: text;
+            -ms-user-select: text;
+            user-select: all;
+        }
+
+        .jumbotron {
+            text-align: center;
+        }
+
+        .title {
+            color: white !important;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand logo">
+                    <img src="http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/key-icon.png" width="27" height="25" alt="">
+                </a>
+                <a class="navbar-brand title">Authentication Bot</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="jumbotron">
+            <h3>Please type the magic code below into your conversation with the bot</h3>
+        </div>
+        <div class="jumbotron">
+            <div id="magic_code"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        document.getElementById("magic_code").innerText = (window.location.hash || '').replace('#', '');
+    </script>
+</body>
+
+</html>

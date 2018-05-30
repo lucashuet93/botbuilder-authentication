@@ -2,7 +2,6 @@ import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, Sto
 import { createServer, Server, Request, Response, Next, plugins } from 'restify';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../../botbuilder-simple-authentication';
 import * as path from 'path';
-import { WSANOTINITIALISED } from 'constants';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
@@ -69,17 +68,17 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]): Promise<Partial<Activity>> => {
 		let cardActions: CardAction[] = [];
 		let buttonTitle: string;
-		authorizationUris.map((a: ProviderAuthorizationUri) => {
-			if (a.provider === ProviderType.ActiveDirectory) {
+		authorizationUris.map((auth: ProviderAuthorizationUri) => {
+			if (auth.provider === ProviderType.ActiveDirectory) {
 				buttonTitle = 'Log in with Microsoft';
-			} else if (a.provider === ProviderType.Facebook) {
+			} else if (auth.provider === ProviderType.Facebook) {
 				buttonTitle = 'Log in with Facebook';
-			} else if (a.provider === ProviderType.Google) {
+			} else if (auth.provider === ProviderType.Google) {
 				buttonTitle = 'Log in with Google';
-			} else if (a.provider === ProviderType.Github) {
+			} else if (auth.provider === ProviderType.Github) {
 				buttonTitle = 'Log in with GitHub';
 			}
-			cardActions.push({ type: 'openUrl', value: a.authorizationUri, title: buttonTitle });
+			cardActions.push({ type: 'openUrl', value: auth.authorizationUri, title: buttonTitle });
 		});
 		let card: Attachment = CardFactory.heroCard('', ['https://qualiscare.com/wp-content/uploads/2017/08/default-user.png'], cardActions);
 		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
