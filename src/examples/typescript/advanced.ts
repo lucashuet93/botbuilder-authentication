@@ -50,33 +50,37 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	},
 	facebook: {
 		clientId: '174907033110091',
-		clientSecret: '482d08e1fa468e10d478ccc772452f24'
+		clientSecret: '482d08e1fa468e10d478ccc772452f24',
+		scopes: ['public_profile', 'email', 'user_likes']
 	},
 	activeDirectory: {
 		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
-		clientSecret: 'bhchfIQN348[^foKKOG54||'
+		clientSecret: 'bhchfIQN348[^foKKOG54||',
+		scopes: ['User.Read', 'User.ReadBasic.All']
 	},
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',
-		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb'
+		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb',
+		scopes: ['https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/gmail.send']
 	},
 	github: {
 		clientId: 'f998ca5d45caba4cfac2',
-		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
+		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7',
+		scopes: ['user', 'notifications']
 	},
-	noUserFoundMessage: `Hmm, it doesn't look like I have you authenticated...`,
+	noUserFoundMessage: `Please select an authentication provider...`,
 	createCustomAuthenticationCard: async (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]): Promise<Partial<Activity>> => {
 		let cardActions: CardAction[] = [];
 		let buttonTitle: string;
 		authorizationUris.map((auth: ProviderAuthorizationUri) => {
 			if (auth.provider === ProviderType.ActiveDirectory) {
-				buttonTitle = 'Log in with Microsoft';
+				buttonTitle = 'Microsoft';
 			} else if (auth.provider === ProviderType.Facebook) {
-				buttonTitle = 'Log in with Facebook';
+				buttonTitle = 'Facebook';
 			} else if (auth.provider === ProviderType.Google) {
-				buttonTitle = 'Log in with Google';
+				buttonTitle = 'Google';
 			} else if (auth.provider === ProviderType.Github) {
-				buttonTitle = 'Log in with GitHub';
+				buttonTitle = 'GitHub';
 			}
 			cardActions.push({ type: 'openUrl', value: auth.authorizationUri, title: buttonTitle });
 		});

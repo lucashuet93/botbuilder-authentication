@@ -256,14 +256,16 @@ export class BotAuthenticationMiddleware {
 		if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, facebook: {
+					... this.authenticationConfig.facebook,
 					clientId: process.env.FACEBOOK_CLIENT_ID as string,
-					clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string
+					clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
 				}
 			}
 		}
 		if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, google: {
+					... this.authenticationConfig.google,
 					clientId: process.env.GOOGLE_CLIENT_ID as string,
 					clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
 				}
@@ -272,6 +274,7 @@ export class BotAuthenticationMiddleware {
 		if (process.env.ACTIVE_DIRECTORY_CLIENT_ID && process.env.ACTIVE_DIRECTORY_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, activeDirectory: {
+					... this.authenticationConfig.activeDirectory,
 					clientId: process.env.ACTIVE_DIRECTORY_CLIENT_ID as string,
 					clientSecret: process.env.ACTIVE_DIRECTORY_CLIENT_SECRET as string
 				}
@@ -280,6 +283,7 @@ export class BotAuthenticationMiddleware {
 		if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, github: {
+					... this.authenticationConfig.github,
 					clientId: process.env.GITHUB_CLIENT_ID as string,
 					clientSecret: process.env.GITHUB_CLIENT_SECRET as string
 				}
@@ -310,11 +314,12 @@ export class BotAuthenticationMiddleware {
 		}
 		if (this.authenticationConfig.activeDirectory) {
 			//active directory authorization uri is created via its oauth client 
+			let activeDirectoryScope = this.authenticationConfig.activeDirectory.scopes ? this.flatMapActiveDirectoryScopes(this.authenticationConfig.activeDirectory.scopes) : defaultProviderOptions.activeDirectory.scopes
 			let adAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.ActiveDirectory,
 				authorizationUri: this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
 					redirect_uri: this.callbackURL,
-					scope: this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : defaultProviderOptions.activeDirectory.scopes,
+					scope: activeDirectoryScope,
 					state: ProviderType.ActiveDirectory
 				})
 			};
@@ -344,6 +349,7 @@ export class BotAuthenticationMiddleware {
 			//add buttons for each provider the user passed configuration options for, or use the default options			
 			let cardActions: CardAction[] = [];
 			let buttonTitle: string;
+			console.log(this.authenticationConfig);
 			authorizationUris.map((providerAuthUri: ProviderAuthorizationUri) => {
 				if (providerAuthUri.provider === ProviderType.ActiveDirectory) {
 					//we can be sure activeDirectory is not undefined given the Provider Type
@@ -361,5 +367,11 @@ export class BotAuthenticationMiddleware {
 			let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 			return authMessage;
 		}
+	}
+
+	flatMapActiveDirectoryScopes(scopes: string[]): string[] {
+		//Active Directory expects a space delimited list of scopes, not commas. Flat map all the scopes into a single string
+		let flatMappedScope = scopes.join(' ');
+		return [flatMappedScope];
 	}
 }
