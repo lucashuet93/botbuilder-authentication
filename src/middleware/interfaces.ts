@@ -6,7 +6,7 @@ import { ProviderType } from './enums';
 //--------------------------------------- CONFIGURATION -----------------------------------------//
 
 export interface BotAuthenticationConfiguration {
-	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
+	isUserAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
 	createCustomAuthenticationCard?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;

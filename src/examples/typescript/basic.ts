@@ -28,7 +28,7 @@ server.post('/api/messages', (req: Request, res: Response) => {
 //----------------------------------------- USAGE --------------------------------------------------------//
 
 const authenticationConfig: BotAuthenticationConfiguration = {
-	userIsAuthenticated: (context: TurnContext): boolean => {
+	isUserAuthenticated: (context: TurnContext): boolean => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.authData;
 	},

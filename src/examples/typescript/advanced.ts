@@ -1,6 +1,8 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
-import { createServer, Server, Request, Response } from 'restify';
+import { createServer, Server, Request, Response, Next, plugins } from 'restify';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../../botbuilder-simple-authentication';
+import * as path from 'path';
+import { WSANOTINITIALISED } from 'constants';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
@@ -34,7 +36,7 @@ server.post('/api/messages', (req: Request, res: Response) => {
 //----------------------------------------- USAGE --------------------------------------------------------//
 
 const authenticationConfig: BotAuthenticationConfiguration = {
-	userIsAuthenticated: (context: TurnContext): boolean => {
+	isUserAuthenticated: (context: TurnContext): boolean => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.authData;
 	},
@@ -82,8 +84,21 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		let card: Attachment = CardFactory.heroCard('', ['https://qualiscare.com/wp-content/uploads/2017/08/default-user.png'], cardActions);
 		let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 		return authMessage;
-	}
+	},
+	customMagicCodeRedirectEndpoint: '/customCode'
 };
+
+server.get('/customCode', (req: Request, res: Response, next: Next) => {
+	let magicCode: string = req.query.magicCode;
+	let hashedUrl = `/renderCustomCode#${magicCode}`;
+	console.log('here')
+	res.redirect(302, hashedUrl, next);
+});
+
+server.get('/renderCustomCode', plugins.serveStatic({
+	'directory': path.join(__dirname, 'public'),
+	'file': 'code.html'
+}));
 
 adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
 

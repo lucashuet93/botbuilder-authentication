@@ -41,7 +41,7 @@ export class BotAuthenticationMiddleware {
 
 	async onTurn(context: TurnContext, next: Function) {
 		if (context.activity.type === 'message') {
-			if (!this.authenticationConfig.userIsAuthenticated(context)) {
+			if (!this.authenticationConfig.isUserAuthenticated(context)) {
 				//run auth
 				if (!this.sentCode) {
 					if (this.authenticationConfig.noUserFoundMessage) {
