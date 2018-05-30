@@ -10,22 +10,22 @@
 
 ## Configuration Properties
 
-##### BotAuthenticationConfiguration
+#### BotAuthenticationConfiguration
 
-| Property                        | Constraint    | Type                  |
-| ------------------------------- | ------------- | --------------------- |
-| isUserAuthenticated             | Required      | Function              |
-| onLoginSuccess                  | Required      | Function              |
-| onLoginFailure                  | Required      | Function              |
-| createCustomAuthenticationCard  | Optional      | Function              |
-| customMagicCodeRedirectEndpoint | Optional      | string                |
-| noUserFoundMessage              | Optional      | string                |
-| facebook                        | Optional      | ProviderConfiguration |
-| activeDirectory                 | Optional      | ProviderConfiguration |
-| google                          | Optional      | ProviderConfiguration |
-| github                          | Optional      | ProviderConfiguration |
+| Property                        | Constraint    | Type                                                                  |
+| ------------------------------- | ------------- | --------------------------------------------------------------------- |
+| isUserAuthenticated             | Required      | (context: TurnContext) => boolean                                     |
+| onLoginSuccess                  | Required      | (context: TurnContext, accessToken: string, provider: string) => void |
+| onLoginFailure                  | Required      | (context: TurnContext, provider: string) => void                      |
+| createCustomAuthenticationCard  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >|
+| customMagicCodeRedirectEndpoint | Optional      | string                                                                |
+| noUserFoundMessage              | Optional      | string                                                                |
+| facebook                        | Optional      | ProviderConfiguration                                                 |
+| activeDirectory                 | Optional      | ProviderConfiguration                                                 |
+| google                          | Optional      | ProviderConfiguration                                                 |
+| github                          | Optional      | ProviderConfiguration                                                 |
 
-##### ProviderConfiguration
+#### ProviderConfiguration
 
 | Property                        | Constraint    | Type                  |
 | ------------------------------- | ------------- | --------------------- |
@@ -34,7 +34,7 @@
 | scopes                          | Optional      | string[]              |
 | buttonText                      | Optional      | string                |
 
-## Provider Default Options 
+## Default Options 
 
 | Providers                | Scopes                                     | Button Text            |
 | ------------------------ | ------------------------------------------ | ---------------------- |
