@@ -1,6 +1,7 @@
-import { ProviderDefaultOptions, OAuthEndpointsConfiguration } from "./interfaces";
+import { DefaultProviderOptions, OAuthEndpointsConfiguration } from './interfaces';
 
-export const providerDefaultOptions: ProviderDefaultOptions = {
+//basic scopes and text options to be used by default
+export const defaultProviderOptions: DefaultProviderOptions = {
 	facebook: {
 		scopes: ['public_profile'],
 		buttonText: 'Log in with Facebook'
@@ -19,7 +20,8 @@ export const providerDefaultOptions: ProviderDefaultOptions = {
 	}
 }
 
-export const oauthEndpoints: OAuthEndpointsConfiguration = {
+//used to create authorization uris and exchange authorization codes for tokens
+export const defaultOAuthEndpoints: OAuthEndpointsConfiguration = {
 	activeDirectory: {
 		tokenBaseUrl: 'https://login.microsoftonline.com',
 		tokenEndpoint: '/common/oauth2/v2.0/token',

@@ -31,7 +31,7 @@ server.post('/api/messages', (req: Request, res: Response) => {
 	})
 })
 
-//--------------------Usage-------------------------
+//----------------------------------------- USAGE --------------------------------------------------------//
 
 const authenticationConfig: BotAuthenticationConfiguration = {
 	userIsAuthenticated: (context: TurnContext): boolean => {
@@ -41,13 +41,13 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.isAuthenticated = true;
-		console.log("ACCESS TOKEN", accessToken, provider)
-		await context.sendActivity("You're logged in!")
+		console.log('ACCESS TOKEN', accessToken, provider)
+		await context.sendActivity(`You're logged in!`)
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.isAuthenticated = false;
-		await context.sendActivity("Login failed.")
+		await context.sendActivity('Login failed.')
 	},
 	facebook: {
 		clientId: '174907033110091',
@@ -78,9 +78,9 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	// 		} else if (a.provider === ProviderType.Github) {
 	// 			buttonTitle = 'Log in with GitHub';
 	// 		}
-	// 		cardActions.push({ type: "openUrl", value: a.authorizationUri, title: buttonTitle });
+	// 		cardActions.push({ type: 'openUrl', value: a.authorizationUri, title: buttonTitle });
 	// 	});
-	// 	let card: Attachment = CardFactory.thumbnailCard("Hmm, it doesn't look like I have you authenticated...", undefined, cardActions);
+	// 	let card: Attachment = CardFactory.thumbnailCard(`Hmm, it doesn't look like I have you authenticated...`, undefined, cardActions);
 	// 	let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 	// 	return authMessage;
 	// }

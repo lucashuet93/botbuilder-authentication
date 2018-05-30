@@ -2,7 +2,7 @@ import { TurnContext, Activity } from 'botbuilder';
 import { AccessToken } from 'simple-oauth2';
 import { ProviderType } from './enums';
 
-//----------------------------Config-------------------------//
+//--------------------------------------- CONFIGURATION -----------------------------------------//
 
 export interface BotAuthenticationConfiguration {
 	userIsAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
@@ -23,16 +23,14 @@ export interface ProviderConfiguration {
 	buttonText?: string;
 }
 
-//------------------Authorization Uris-------------------//
-
 export interface ProviderAuthorizationUri {
 	provider: ProviderType;
 	authorizationUri: string;
 }
 
-//------------------Provider Default Options-------------------//
+//--------------------------------- PROVIDER DEFAULT OPTIONS ----------------------------------//
 
-export interface ProviderDefaultOptions {
+export interface DefaultProviderOptions {
 	facebook: ProviderDefaults;
 	activeDirectory: ProviderDefaults;
 	google: ProviderDefaults;
@@ -44,7 +42,7 @@ export interface ProviderDefaults {
 	buttonText: string;
 }
 
-//----------------------OAuth Endpoints------------------------//
+//-------------------------------------- OAUTH ENDPOINTS -------------------------------------//
 
 export interface OAuthEndpointsConfiguration {
 	activeDirectory: OAuthEndpoints;
