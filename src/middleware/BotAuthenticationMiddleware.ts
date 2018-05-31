@@ -4,14 +4,14 @@ import * as dotenv from 'dotenv';
 import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken, Token, AuthorizationTokenConfig } from 'simple-oauth2';
 import { randomBytes } from 'crypto';
 import { Server, Request, Response, Next } from 'restify';
-import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment } from 'botbuilder';
+import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 import { BotAuthenticationConfiguration, ProviderConfiguration, DefaultProviderOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, ProviderAuthorizationUri } from './interfaces';
 import { ProviderType } from './enums';
 import { defaultProviderOptions, defaultOAuthEndpoints } from './constants';
 
-export class BotAuthenticationMiddleware {
+export class BotAuthenticationMiddleware implements Middleware {
 
 	private server: Server;
 	private adapter: BotFrameworkAdapter;
@@ -39,30 +39,30 @@ export class BotAuthenticationMiddleware {
 		this.initializeOAuth();
 		this.initializePassport();
 		this.createRedirectEndpoints();
-	}
+	};
 
-	async onTurn(context: TurnContext, next: Function) {
+	async onTurn(context: TurnContext, next: Function): Promise<void> {
 		if (context.activity.type === 'message') {
 			if (!this.authenticationConfig.isUserAuthenticated(context)) {
 				//run auth
 				if (!this.sentCode) {
 					if (this.authenticationConfig.noUserFoundMessage) {
 						await context.sendActivity(this.authenticationConfig.noUserFoundMessage);
-					}
+					};
 					await context.sendActivity(await this.createAuthenticationCard(context))
 				} else {
 					await this.handleMagicCode(context);
-				}
+				};
 				return;
 			} else {
 				//immediately pass on authenticated messages
 				await next();
-			}
+			};
 		} else {
 			//immediately pass on non-messages
 			await next();
-		}
-	}
+		};
+	};
 
 	async handleMagicCode(context: TurnContext): Promise<void> {
 		let submittedCode: string = context.activity.text;
@@ -79,12 +79,12 @@ export class BotAuthenticationMiddleware {
 			} else {
 				let loginFailedMessage: Partial<Activity> = MessageFactory.text('Invalid code. Please try again');
 				await context.sendActivities([loginFailedMessage, await this.createAuthenticationCard(context)]);
-			}
+			};
 			this.magicCode = '';
 			this.sentCode = false;
 			this.currentAccessToken = '';
-		}
-	}
+		};
+	};
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
 
@@ -144,9 +144,9 @@ export class BotAuthenticationMiddleware {
 					.catch((error: any) => {
 						console.log('Access Token Error', error);
 					});
-			}
+			};
 		});
-	}
+	};
 
 	generateMagicCode(): string {
 		//generate a magic code, store it for the next turn and set sentCode to true to prepare for the following turn
@@ -154,7 +154,7 @@ export class BotAuthenticationMiddleware {
 		this.magicCode = magicCode;
 		this.sentCode = true;
 		return magicCode;
-	}
+	};
 
 	renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
 		if (this.authenticationConfig.customMagicCodeRedirectEndpoint) {
@@ -164,8 +164,8 @@ export class BotAuthenticationMiddleware {
 		} else {
 			//send vanilla text to the user
 			res.send(`Please enter the code into the bot: ${magicCode}`);
-		}
-	}
+		};
+	};
 
 	//---------------------------- PASSPORT INIT (Facebook, Google, and Twitter) -----------------------------//
 
@@ -201,7 +201,7 @@ export class BotAuthenticationMiddleware {
 					successRedirect: '/auth/callback',
 					failureRedirect: '/auth/failure'
 				}));
-		}
+		};
 
 		//Google
 		if (this.authenticationConfig.google) {
@@ -222,8 +222,8 @@ export class BotAuthenticationMiddleware {
 					successRedirect: '/auth/callback',
 					failureRedirect: '/auth/failure'
 				}));
-		}
-	}
+		};
+	};
 
 	//------------------------------ OAUTH INIT (Active Directory and Github) --------------------------------//
 
@@ -240,7 +240,7 @@ export class BotAuthenticationMiddleware {
 		//add providers the user passed configuration options for
 		if (this.authenticationConfig.activeDirectory) this.oauthClients.activeDirectory = this.createOAuthClient(ProviderType.ActiveDirectory);
 		if (this.authenticationConfig.github) this.oauthClients.github = this.createOAuthClient(ProviderType.Github);
-	}
+	};
 
 	createOAuthClient(provider: ProviderType): OAuthClient {
 		//take the provided client id and secret with the provider's default oauth endpoints to create an OAuth client
@@ -259,7 +259,7 @@ export class BotAuthenticationMiddleware {
 			}
 		};
 		return createOAuth(credentials);
-	}
+	};
 
 	//--------------------------------------- ENVIRONMENT VARIABLES ------------------------------------------//
 
@@ -268,7 +268,7 @@ export class BotAuthenticationMiddleware {
 		let environment: string = process.env.NODE_ENV || 'development';
 		if (environment === 'development') {
 			dotenv.load();
-		}
+		};
 		//update the authentication configuration accordingly
 		if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
 			this.authenticationConfig = {
@@ -277,8 +277,8 @@ export class BotAuthenticationMiddleware {
 					clientId: process.env.FACEBOOK_CLIENT_ID as string,
 					clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
 				}
-			}
-		}
+			};
+		};
 		if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, google: {
@@ -286,8 +286,8 @@ export class BotAuthenticationMiddleware {
 					clientId: process.env.GOOGLE_CLIENT_ID as string,
 					clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
 				}
-			}
-		}
+			};
+		};
 		if (process.env.ACTIVE_DIRECTORY_CLIENT_ID && process.env.ACTIVE_DIRECTORY_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, activeDirectory: {
@@ -295,8 +295,8 @@ export class BotAuthenticationMiddleware {
 					clientId: process.env.ACTIVE_DIRECTORY_CLIENT_ID as string,
 					clientSecret: process.env.ACTIVE_DIRECTORY_CLIENT_SECRET as string
 				}
-			}
-		}
+			};
+		};
 		if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, github: {
@@ -304,9 +304,9 @@ export class BotAuthenticationMiddleware {
 					clientId: process.env.GITHUB_CLIENT_ID as string,
 					clientSecret: process.env.GITHUB_CLIENT_SECRET as string
 				}
-			}
-		}
-	}
+			};
+		};
+	};
 
 	//------------------------------------------ CARD --------------------------------------------------------//
 
@@ -320,7 +320,7 @@ export class BotAuthenticationMiddleware {
 				authorizationUri: `${this.baseUrl}/auth/facebook`
 			};
 			authorizationUris.push(facebookAuthorizationUri);
-		}
+		};
 		if (this.authenticationConfig.google) {
 			//google authorization uri is the endpoint we set up in the Passport initialization
 			let googleAuthorizationUri: ProviderAuthorizationUri = {
@@ -328,7 +328,7 @@ export class BotAuthenticationMiddleware {
 				authorizationUri: `${this.baseUrl}/auth/google`
 			};
 			authorizationUris.push(googleAuthorizationUri);
-		}
+		};
 		if (this.authenticationConfig.activeDirectory) {
 			//active directory authorization uri is created via its oauth client 
 			let activeDirectoryScope = this.authenticationConfig.activeDirectory.scopes ? this.flatMapActiveDirectoryScopes(this.authenticationConfig.activeDirectory.scopes) : defaultProviderOptions.activeDirectory.scopes
@@ -341,7 +341,7 @@ export class BotAuthenticationMiddleware {
 				})
 			};
 			authorizationUris.push(adAuthorizationUri);
-		}
+		};
 		if (this.authenticationConfig.github) {
 			//github authorization uri is created via its oauth client 
 			let githubAuthorizationUri: ProviderAuthorizationUri = {
@@ -353,9 +353,9 @@ export class BotAuthenticationMiddleware {
 				})
 			};
 			authorizationUris.push(githubAuthorizationUri);
-		}
+		};
 		return authorizationUris;
-	}
+	};
 
 	async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
 		let authorizationUris: ProviderAuthorizationUri[] = this.createAuthorizationUris();
@@ -382,12 +382,12 @@ export class BotAuthenticationMiddleware {
 			let card: Attachment = CardFactory.thumbnailCard('', undefined, cardActions);
 			let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 			return authMessage;
-		}
-	}
+		};
+	};
 
 	flatMapActiveDirectoryScopes(scopes: string[]): string[] {
 		//Active Directory expects a space delimited list of scopes, not commas. Flat map all the scopes into a single string
 		let flatMappedScope = scopes.join(' ');
 		return [flatMappedScope];
-	}
-}
+	};
+};
