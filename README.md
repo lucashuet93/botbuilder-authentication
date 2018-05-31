@@ -1,15 +1,30 @@
 
 # botbuilder-simple-authentication
 
-| Supported Providers |
-|:-------------------:|
-| Active Directory V2 |
-| Facebook            |
-| Google              |
-| GitHub              |
+#### Table of Contents
+1. [Basic Usage](#basic)
+1. [Samples](#samples)
+1. [Configuration Properties](#properties)
+1. [Custom Scopes](#scopes)
+1. [Custom Button Text](#text)
+1. [Custom Authentication Card](#card)
+1. [Custom Magic Code HTML](#code)
+1. [Using Environment Variables](#env)
 
+<div id='basic'></div>
 
 ## Basic Usage
+
+#### Create an Application with a Supported Provider
+
+| Supported Providers | Redirect URL                              | Developer Site                         |
+| ------------------- | ----------------------------------------- | -------------------------------------- |
+| Active Directory V2 | {SITE_ROOT}/auth/callback                 | https://apps.dev.microsoft.com         |
+| Facebook            | {SITE_ROOT}/auth/facebook/callback        | https://developers.facebook.com/apps   |
+| Google              | {SITE_ROOT}/auth/google/callback          | https://console.cloud.google.com/home  |
+| GitHub              | {SITE_ROOT}/auth/callback                 | https://github.com/settings/developers |
+
+
 
 #### Installation
 
@@ -57,27 +72,30 @@ const authenticationConfig = {
 ```javascript
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenticationConfig));
 ```
+<div id='samples'></div>
 
 ## Samples
 
 This repository provides basic and advanced examples for both JavaScript and TypeScript, found in **/src/samples**.
 
+<div id='properties'></div>
+
 ## Configuration Properties
 
 #### BotAuthenticationConfiguration
 
-| Property                           | Constraint    | Type                                                                  |
-| ---------------------------------- | ------------- | --------------------------------------------------------------------- |
-| isUserAuthenticated                | Required      | (context: TurnContext) => boolean                                     |
-| onLoginSuccess                     | Required      | (context: TurnContext, accessToken: string, provider: string) => void |
-| onLoginFailure                     | Required      | (context: TurnContext, provider: string) => void                      |
-| customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >|
-| customMagicCodeRedirectEndpoint    | Optional      | string                                                                |
-| noUserFoundMessage                 | Optional      | string                                                                |
-| facebook                           | Optional      | ProviderConfiguration                                                 |
-| activeDirectory                    | Optional      | ProviderConfiguration                                                 |
-| google                             | Optional      | ProviderConfiguration                                                 |
-| github                             | Optional      | ProviderConfiguration                                                 |
+| Property                           | Constraint    | Type                                                                  | Description                  |
+| ---------------------------------- | ------------- | --------------------------------------------------------------------- | -----------------------------|
+| isUserAuthenticated                | Required      | (context: TurnContext) => boolean                                     | Runs each converation turn. The middleware will prevent the bot logic from running when it returns false. | 
+| onLoginSuccess                     | Required      | (context: TurnContext, accessToken: string, provider: string) => void | Runs when the user inputs the correct magic code.  |
+| onLoginFailure                     | Required      | (context: TurnContext, provider: string) => void                      | Runs when the user inputs an incorrect magic code. |
+| customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >| Overrides the default Authentication Card. The middleware supplies the authorization uris necessary to build the card. |
+| customMagicCodeRedirectEndpoint    | Optional      | string                                                                | Overrides the default magic code display page. The server endpoint provided will receive a request with the magic code in the querystring. |
+| noUserFoundMessage                 | Optional      | string                                                                | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
+| facebook                           | Optional      | ProviderConfiguration                                                 | Configuration object for Facebook, enabling Facebook authentication. |
+| activeDirectory                    | Optional      | ProviderConfiguration                                                 | Configuration object for Active Directory, enabling AADv2 authentication. |
+| google                             | Optional      | ProviderConfiguration                                                 | Configuration object for Google, enabling Google authentication. |
+| github                             | Optional      | ProviderConfiguration                                                 | Configuration object for GitHub, enabling GitHub authentication. |
 
 #### ProviderConfiguration
 
@@ -87,6 +105,8 @@ This repository provides basic and advanced examples for both JavaScript and Typ
 | clientSecret                    | Required      | string                |
 | scopes                          | Optional      | string[]              |
 | buttonText                      | Optional      | string                |
+
+<div id='scopes'></div>
 
 ## Custom Scopes
 
@@ -118,7 +138,9 @@ facebook: {
 }
 ```
 
-## Customizing Button Text
+<div id='text'></div>
+
+## Custom Button Text
 
 Each provider declared in the BotAuthenticationConfiguration object has an optional `buttonText` property that accepts a string. If custom button text isn't provided, the following strings are used by default:
 
@@ -148,8 +170,14 @@ facebook: {
 }
 ```
 
+<div id='card'></div>
+
 ## Custom Authentication Card
 
+<div id='code'></div>
+
 ## Custom Magic Code HTML
+
+<div id='env'></div>
 
 ## Using Environment Variables
