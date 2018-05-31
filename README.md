@@ -229,11 +229,11 @@ The ```customAuthenticationCardGenerator``` property is used to override the def
 
 #### Default Authentication Card
 
-<img src="./src/images/DefaultCard.jpg"  height="150"/>
+<kbd><img src="./src/images/DefaultCard.jpg"  height="150"/></kbd>
 
 #### Example Custom Authentication Card
 
-<img src="./src/images/CustomCard.jpg" height="450" />
+<kbd><img src="./src/images/CustomCard.jpg" height="450" /></kbd>
 
 ```javascript
 customAuthenticationCardGenerator: async (context, authorizationUris) => {
@@ -267,11 +267,11 @@ In order to fully implement a custom page, the server passed to the middleware w
 
 #### Default Magic Code HTML
 
-<img src="./src/images/DefaultHTML.jpg" height="350" />
+<kbd><img src="./src/images/DefaultHTML.jpg" height="350" /></kbd>
 
 #### Example Custom Magic Code HTML
 
-<img src="./src/images/CustomHTML.jpg" height="350" />
+<kbd><img src="./src/images/CustomHTML.jpg" height="350" /></kbd>
 
 In the example below, restify exposes an endpoint that serves up an html file expecting a magic code in the URL's hash. The ```customMagicCodeRedirectEndpoint``` property is set to another endpoint that parses the magic code and sends it in the hash to the html file.
 
@@ -375,7 +375,7 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
         <div class="container">
             <div class="navbar-header">
                 <a class="navbar-brand logo">
-                    <img src="http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/key-icon.png" width="27" height="25" alt="">
+                    <kbd><img src="http://icons.iconarchive.com/icons/paomedia/small-n-flat/256/key-icon.png" width="27" height="25" alt="">
                 </a>
                 <a class="navbar-brand title">Authentication Bot</a>
             </div>
