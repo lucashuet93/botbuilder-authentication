@@ -72,7 +72,12 @@ export class BotAuthenticationMiddleware {
 			this.currentAccessToken = '';
 		} else {
 			//reset necessary properties
-			await this.authenticationConfig.onLoginFailure(context, this.selectedProvider);
+			if (this.authenticationConfig.onLoginFailure) {
+				await this.authenticationConfig.onLoginFailure(context, this.selectedProvider);
+			} else {
+				let loginFailedMessage: Partial<Activity> = MessageFactory.text('Invalid code. Please try again');
+				await context.sendActivities([loginFailedMessage, await this.createAuthenticationCard(context)]);
+			}
 			this.magicCode = '';
 			this.sentCode = false;
 			this.currentAccessToken = '';

@@ -17,13 +17,14 @@
 
 #### Create an Application with a Supported Provider
 
-| Supported Providers | Redirect URL                              | Developer Site                         |
-| ------------------- | ----------------------------------------- | -------------------------------------- |
-| Active Directory V2 | {SITE_ROOT}/auth/callback                 | https://apps.dev.microsoft.com         |
-| Facebook            | {SITE_ROOT}/auth/facebook/callback        | https://developers.facebook.com/apps   |
-| Google              | {SITE_ROOT}/auth/google/callback          | https://console.cloud.google.com/home  |
-| GitHub              | {SITE_ROOT}/auth/callback                 | https://github.com/settings/developers |
+Navigate to a supported provider's developer site and create a new application. Add the appropriate endpoints to your app's approved redirect urls (localhost and deployed site). Copy the clientId and clientSecret used to create the BotAuthenticationConfiguration.
 
+| Supported Providers | Redirect URL                             | Developer Site                         |
+| ------------------- | ---------------------------------------- | -------------------------------------- |
+| Active Directory V2 | {ROOT_URL}/auth/callback                 | https://apps.dev.microsoft.com         |
+| Facebook            | {ROOT_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
+| Google              | {ROOT_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
+| GitHub              | {ROOT_URL}/auth/callback                 | https://github.com/settings/developers |
 
 
 #### Installation
@@ -92,19 +93,19 @@ This repository provides basic and advanced examples for both JavaScript and Typ
 | customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >| Overrides the default Authentication Card. The middleware supplies the authorization uris necessary to build the card. |
 | customMagicCodeRedirectEndpoint    | Optional      | string                                                                | Overrides the default magic code display page. The server endpoint provided will receive a request with the magic code in the querystring. |
 | noUserFoundMessage                 | Optional      | string                                                                | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
-| facebook                           | Optional      | ProviderConfiguration                                                 | Configuration object for Facebook, enabling Facebook authentication. |
-| activeDirectory                    | Optional      | ProviderConfiguration                                                 | Configuration object for Active Directory, enabling AADv2 authentication. |
-| google                             | Optional      | ProviderConfiguration                                                 | Configuration object for Google, enabling Google authentication. |
-| github                             | Optional      | ProviderConfiguration                                                 | Configuration object for GitHub, enabling GitHub authentication. |
+| facebook                           | Optional      | ProviderConfiguration                                                 | Configuration object that enabes Facebook authentication. |
+| activeDirectory                    | Optional      | ProviderConfiguration                                                 | Configuration object that enables Azure AD V2 authentication. |
+| google                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables Google authentication. |
+| github                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables GitHub authentication. |
 
 #### ProviderConfiguration
 
-| Property                        | Constraint    | Type                  |
-| ------------------------------- | ------------- | --------------------- |
-| clientId                        | Required      | string                |
-| clientSecret                    | Required      | string                |
-| scopes                          | Optional      | string[]              |
-| buttonText                      | Optional      | string                |
+| Property                        | Constraint    | Type                  | Description                                                                          |
+| ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| clientId                        | Required      | string                | Client id taken from the provider's authentication application.                      |
+| clientSecret                    | Required      | string                | Client secret taken from the provider's authentication application.                  |
+| scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
+| buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 
 <div id='scopes'></div>
 

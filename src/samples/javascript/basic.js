@@ -39,10 +39,6 @@ const authenticationConfig = {
 		state.authData = { accessToken, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
-	onLoginFailure: async (context, provider) => {
-		const state = conversationState.get(context);
-		await context.sendActivity('Login failed.');
-	},
 	facebook: {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24'

@@ -8,7 +8,7 @@ import { ProviderType } from './enums';
 export interface BotAuthenticationConfiguration {
 	isUserAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
-	onLoginFailure: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
+	onLoginFailure?: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
 	customAuthenticationCardGenerator?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
 	customMagicCodeRedirectEndpoint?: string; 
 	noUserFoundMessage?: string;

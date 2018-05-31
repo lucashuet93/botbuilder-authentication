@@ -40,10 +40,6 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		state.authData = { accessToken, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
-	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
-		const state: StoreItem = conversationState.get(context) as StoreItem;
-		await context.sendActivity('Login failed.');
-	},
 	facebook: {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24'
