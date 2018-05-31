@@ -17,22 +17,9 @@
 ```BotAuthenticationMiddleware``` assumes control of the conversation flow when a user is not authenticated and provides the user's access token after successful login. 
 
 The middleware minimally requires 3 configuration properties:
-1. At least one clientId/clientSecret for an application created with a supported provider.
 1. A method that returns whether the user is authenticated or not.
 1. A method that is triggered after the user has logged in successfully that receives the user's access token.
-
-
-#### Create an Application with a Supported Provider
-
-Navigate to a supported provider's developer site and create a new application. Add the appropriate endpoints to your app's approved redirect urls, then copy the clientId and clientSecret that will be used to create the BotAuthenticationConfiguration.
-
-| Supported Providers | Redirect URL                             | Developer Site                         |
-| ------------------- | ---------------------------------------- | -------------------------------------- |
-| Active Directory V2 | {ROOT_URL}/auth/callback                 | https://apps.dev.microsoft.com         |
-| Facebook            | {ROOT_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
-| Google              | {ROOT_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
-| GitHub              | {ROOT_URL}/auth/callback                 | https://github.com/settings/developers |
-
+1. At least one clientId/clientSecret for an application created with a supported provider.
 
 #### Installation
 
@@ -77,6 +64,18 @@ const authenticationConfig = {
 ```javascript
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenticationConfig));
 ```
+
+#### Create an Application with a Supported Provider
+
+Navigate to a supported provider's developer site and create a new application. Add the appropriate endpoints to your app's approved redirect urls, then copy the clientId and clientSecret that will be used to create the BotAuthenticationConfiguration.
+
+| Supported Providers | Redirect URL                             | Developer Site                         |
+| ------------------- | ---------------------------------------- | -------------------------------------- |
+| Active Directory V2 | {ROOT_URL}/auth/callback                 | https://apps.dev.microsoft.com         |
+| Facebook            | {ROOT_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
+| Google              | {ROOT_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
+| GitHub              | {ROOT_URL}/auth/callback                 | https://github.com/settings/developers |
+
 <div id='samples'></div>
 
 ## Samples
@@ -115,7 +114,7 @@ adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenti
 
 ## Using Environment Variables
 
-Provider ClientIds and ClientSecrets can be set via environment variables and do not have to be set in ProviderConfiguration objects.
+Provider clientIds and clientSecrets can be set via environment variables and do not have to be set in ProviderConfiguration objects.
 
 | BotAuthenticationConfiguration Property  | Environment Variable                       |
 | ---------------------------------------- | ------------------------------------------ |
@@ -163,7 +162,7 @@ const authenticationConfig = {
 
 ## Custom Scopes
 
-Each provider declared in the BotAuthenticationConfiguration object has an optional `scope` property that accepts an array of strings. If custom scopes aren't provided, the following scopes are used by default:
+Each provider declared in the ```BotAuthenticationConfiguration``` object has an optional `scope` property that accepts an array of strings. If custom scopes aren't provided, the following scopes are used by default:
 
 
 | Provider                 | Scopes                                     |
@@ -226,7 +225,7 @@ facebook: {
 
 ## Custom Authentication Card
 
-The ```customAuthenticationCardGenerator``` property is used to override the default Authentication Card. The method receives the authorization uris for each provider set in the ```BotAuthenticationConfiguration``` and is responsible for navigating the user to one of them. 
+The ```customAuthenticationCardGenerator``` property is used to override the default card. The method receives the authorization uris for each provider set in the ```BotAuthenticationConfiguration``` and is responsible for navigating the user to one of them. 
 
 #### Default Authentication Card
 
@@ -270,13 +269,11 @@ In order to fully implement a custom page, the server passed to the middleware w
 
 <img src="./src/images/DefaultHTML.jpg" height="350" />
 
-
-
 #### Example Custom Magic Code HTML
 
 <img src="./src/images/CustomHTML.jpg" height="350" />
 
-In the example below, restify exposes an endpoint that serves up an index.html file expecting a magic code in the URL's hash. The ```customMagicCodeRedirectEndpoint``` property is set to another endpoint that parses the magic code and sends it in the hash to the html file.
+In the example below, restify exposes an endpoint that serves up an html file expecting a magic code in the URL's hash. The ```customMagicCodeRedirectEndpoint``` property is set to another endpoint that parses the magic code and sends it in the hash to the html file.
 
 #### /app.js
 
