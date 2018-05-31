@@ -71,10 +71,10 @@ Navigate to a supported provider's developer site and create a new application. 
 
 | Supported Providers | Redirect URL                             | Developer Site                         |
 | ------------------- | ---------------------------------------- | -------------------------------------- |
-| Active Directory V2 | {ROOT_URL}/auth/callback                 | https://apps.dev.microsoft.com         |
+| Active Directory V2 | {ROOT_URL}/auth/activeDirectory/callback | https://apps.dev.microsoft.com         |
 | Facebook            | {ROOT_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
 | Google              | {ROOT_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
-| GitHub              | {ROOT_URL}/auth/callback                 | https://github.com/settings/developers |
+| GitHub              | {ROOT_URL}/auth/github/callback          | https://github.com/settings/developers |
 
 <div id='samples'></div>
 

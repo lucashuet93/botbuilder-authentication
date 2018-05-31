@@ -14,7 +14,6 @@ let adapter = new BotFrameworkAdapter({
 	appPassword: undefined
 });
 
-
 let storage: MemoryStorage = new MemoryStorage();
 const conversationState: ConversationState = new ConversationState(storage);
 adapter.use(conversationState);

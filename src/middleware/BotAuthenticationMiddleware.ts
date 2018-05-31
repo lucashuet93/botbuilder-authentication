@@ -94,6 +94,14 @@ export class BotAuthenticationMiddleware {
 		this.server.get('/auth/failure', (req: Request, res: Response, next: Next) => {
 			res.send(`Authentication Failed`);
 		});
+		this.server.get('/auth/activeDirectory/callback', (req: Request, res: Response, next: Next) => {
+			console.log('here')
+			res.redirect(302, this.callbackURL, next);
+		});
+		this.server.get('/auth/github/callback', (req: Request, res: Response, next: Next) => {
+			console.log('here2')
+			res.redirect(302, this.callbackURL, next);
+		});
 		//create redirect endpoint for login success 
 		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
 			let code: string | undefined = req.query.code;
@@ -325,7 +333,7 @@ export class BotAuthenticationMiddleware {
 			let adAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.ActiveDirectory,
 				authorizationUri: this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
-					redirect_uri: this.callbackURL,
+					redirect_uri: 'http://localhost:3978/auth/activeDirectory/callback',
 					scope: activeDirectoryScope,
 					state: ProviderType.ActiveDirectory
 				})
@@ -337,7 +345,7 @@ export class BotAuthenticationMiddleware {
 			let githubAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Github,
 				authorizationUri: this.oauthClients.github.authorizationCode.authorizeURL({
-					redirect_uri: this.callbackURL,
+					redirect_uri: 'http://localhost:3978/auth/github/callback',
 					scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes,
 					state: ProviderType.Github
 				})
