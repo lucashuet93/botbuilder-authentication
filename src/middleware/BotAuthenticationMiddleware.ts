@@ -33,21 +33,12 @@ export class BotAuthenticationMiddleware {
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
 		this.oauthEndpoints = defaultOAuthEndpoints;
-		this.baseUrl = this.calculateBaseUrl();
+		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}`: this.server.address().address;
 		this.callbackURL = `${this.baseUrl}/auth/callback`;
 		this.initializeEnvironmentVariables();
 		this.initializeOAuth();
 		this.initializePassport();
 		this.createRedirectEndpoints();
-	}
-
-	calculateBaseUrl(): string {
-		let baseUrl: string = this.server.address().address;
-		if (this.server.address().address === '::') {
-			//localhost
-			baseUrl = `http://localhost:${this.server.address().port}`
-		}
-		return baseUrl;
 	}
 
 	async onTurn(context: TurnContext, next: Function) {
