@@ -16,6 +16,7 @@ export class BotAuthenticationMiddleware {
 	private server: Server;
 	private adapter: BotFrameworkAdapter;
 	private authenticationConfig: BotAuthenticationConfiguration;
+	private baseUrl: string;
 	private callbackURL: string;
 	private oauthEndpoints: OAuthEndpointsConfiguration;
 	private oauthClients: {
@@ -32,11 +33,21 @@ export class BotAuthenticationMiddleware {
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
 		this.oauthEndpoints = defaultOAuthEndpoints;
-		this.callbackURL = 'http://localhost:3978/auth/callback';
+		this.baseUrl = this.calculateBaseUrl();
+		this.callbackURL = `${this.baseUrl}/auth/callback`;
 		this.initializeEnvironmentVariables();
 		this.initializeOAuth();
 		this.initializePassport();
 		this.createRedirectEndpoints();
+	}
+
+	calculateBaseUrl(): string {
+		let baseUrl: string = this.server.address().address;
+		if (this.server.address().address === '::') {
+			//localhost
+			baseUrl = `http://localhost:${this.server.address().port}`
+		}
+		return baseUrl;
 	}
 
 	async onTurn(context: TurnContext, next: Function) {
@@ -185,7 +196,7 @@ export class BotAuthenticationMiddleware {
 			passport.use(new FacebookStrategy({
 				clientID: this.authenticationConfig.facebook.clientId,
 				clientSecret: this.authenticationConfig.facebook.clientSecret,
-				callbackURL: 'http://localhost:3978/auth/facebook/callback'
+				callbackURL: `${this.baseUrl}/auth/facebook/callback`
 			}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
 				//store the access token on successful login (callback runs before successRedirect)
 				this.currentAccessToken = accessToken;
@@ -206,7 +217,7 @@ export class BotAuthenticationMiddleware {
 			passport.use(new GoogleStrategy({
 				clientID: this.authenticationConfig.google.clientId,
 				clientSecret: this.authenticationConfig.google.clientSecret,
-				callbackURL: 'http://localhost:3978/auth/google/callback'
+				callbackURL: `${this.baseUrl}/auth/google/callback`
 			}, (accessToken: string, refreshToken: string, profile: GoogleProfile, done: Function) => {
 				//store the access token on successful login (callback runs before successRedirect)
 				this.currentAccessToken = accessToken;
@@ -315,7 +326,7 @@ export class BotAuthenticationMiddleware {
 			//facebook authorization uri is the endpoint we set up in the Passport initialization
 			let facebookAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Facebook,
-				authorizationUri: 'http://localhost:3978/auth/facebook'
+				authorizationUri: `${this.baseUrl}/auth/facebook`
 			};
 			authorizationUris.push(facebookAuthorizationUri);
 		}
@@ -323,7 +334,7 @@ export class BotAuthenticationMiddleware {
 			//google authorization uri is the endpoint we set up in the Passport initialization
 			let googleAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Google,
-				authorizationUri: 'http://localhost:3978/auth/google'
+				authorizationUri: `${this.baseUrl}/auth/google`
 			};
 			authorizationUris.push(googleAuthorizationUri);
 		}
@@ -333,7 +344,7 @@ export class BotAuthenticationMiddleware {
 			let adAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.ActiveDirectory,
 				authorizationUri: this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
-					redirect_uri: 'http://localhost:3978/auth/activeDirectory/callback',
+					redirect_uri: `${this.baseUrl}/auth/activeDirectory/callback`,
 					scope: activeDirectoryScope,
 					state: ProviderType.ActiveDirectory
 				})
@@ -345,7 +356,7 @@ export class BotAuthenticationMiddleware {
 			let githubAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Github,
 				authorizationUri: this.oauthClients.github.authorizationCode.authorizeURL({
-					redirect_uri: 'http://localhost:3978/auth/github/callback',
+					redirect_uri: `${this.baseUrl}/auth/github/callback`,
 					scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes,
 					state: ProviderType.Github
 				})
