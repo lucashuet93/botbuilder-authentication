@@ -33,7 +33,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
 		this.oauthEndpoints = defaultOAuthEndpoints;
-		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}`: this.server.address().address;
+		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}` : this.server.address().address;
 		this.callbackURL = `${this.baseUrl}/auth/callback`;
 		this.initializeEnvironmentVariables();
 		this.initializeOAuth();
@@ -96,56 +96,55 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.server.get('/auth/failure', (req: Request, res: Response, next: Next) => {
 			res.send(`Authentication Failed`);
 		});
+		//create redirect endpoints for login success
 		this.server.get('/auth/activeDirectory/callback', (req: Request, res: Response, next: Next) => {
-			console.log('here')
-			res.redirect(302, this.callbackURL, next);
+			this.handleRedirect(req, res, next)
 		});
 		this.server.get('/auth/github/callback', (req: Request, res: Response, next: Next) => {
-			console.log('here2')
-			res.redirect(302, this.callbackURL, next);
+			this.handleRedirect(req, res, next)
 		});
-		//create redirect endpoint for login success 
+		//passport providers ultimately redirect here
 		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
-			let code: string | undefined = req.query.code;
+			//providers using Passport have already exchanged the authorization code for an access token
 			let magicCode: string = this.generateMagicCode();
-			//providers using Passport do not have a code in the query string, those using OAuth do.
-			if (!code) {
-				//providers using Passport have already exchanged the authorization code for an access token
-				this.renderMagicCode(req, res, next, magicCode);
-			} else {
-				//providers using OAuth must exchange the authorization code for access token
-				const tokenConfig: AuthorizationTokenConfig = {
-					code: code,
-					redirect_uri: this.callbackURL
-				};
-				//parse the selected provider passed over in query string state (from card)
-				let selectedOAuthClient: OAuthClient;
-				switch (req.query.state) {
-					case ProviderType.ActiveDirectory:
-						selectedOAuthClient = this.oauthClients.activeDirectory;
-						this.selectedProvider = ProviderType.ActiveDirectory;
-						break;
-					case ProviderType.Github:
-						selectedOAuthClient = this.oauthClients.github;
-						this.selectedProvider = ProviderType.Github;
-						break;
-					default:
-						selectedOAuthClient = this.oauthClients.activeDirectory;
-						this.selectedProvider = ProviderType.ActiveDirectory;
-						break;
-				}
-				//exchange the authorization code for the access token
-				selectedOAuthClient.authorizationCode.getToken(tokenConfig)
-					.then((result: any) => {
-						const accessToken: AccessToken = selectedOAuthClient.accessToken.create(result);
-						this.currentAccessToken = accessToken.token['access_token'] as string;
-						this.renderMagicCode(req, res, next, magicCode);
-					})
-					.catch((error: any) => {
-						console.log('Access Token Error', error);
-					});
-			};
+			this.renderMagicCode(req, res, next, magicCode);
 		});
+	};
+
+	handleRedirect(req: Request, res: Response, next: Next) {
+		let code: string = req.query.code;
+		let magicCode: string = this.generateMagicCode();
+		//parse the selected provider passed over in query string state (from card)
+		let selectedOAuthClient: OAuthClient;
+		switch (req.query.state) {
+			case ProviderType.ActiveDirectory:
+				selectedOAuthClient = this.oauthClients.activeDirectory;
+				this.selectedProvider = ProviderType.ActiveDirectory;
+				break;
+			case ProviderType.Github:
+				selectedOAuthClient = this.oauthClients.github;
+				this.selectedProvider = ProviderType.Github;
+				break;
+			default:
+				selectedOAuthClient = this.oauthClients.activeDirectory;
+				this.selectedProvider = ProviderType.ActiveDirectory;
+				break;
+		}
+		//providers using OAuth must exchange the authorization code for access token
+		let tokenConfig: AuthorizationTokenConfig = {
+			code: code,
+			redirect_uri: `${this.baseUrl}/auth/${this.selectedProvider}/callback`
+		};
+		//exchange the authorization code for the access token
+		selectedOAuthClient.authorizationCode.getToken(tokenConfig)
+			.then((result: any) => {
+				const accessToken: AccessToken = selectedOAuthClient.accessToken.create(result);
+				this.currentAccessToken = accessToken.token['access_token'] as string;
+				this.renderMagicCode(req, res, next, magicCode);
+			})
+			.catch((error: any) => {
+				console.log('Access Token Error', error);
+			});
 	};
 
 	generateMagicCode(): string {
