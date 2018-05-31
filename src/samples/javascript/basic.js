@@ -35,6 +35,7 @@ const authenticationConfig = {
 		return state.authData;
 	},
 	onLoginSuccess: async (context, accessToken, provider) => {
+		//the middleware passes over the access token retrieved for the user
 		const state = conversationState.get(context);
 		state.authData = { accessToken, provider };
 		await context.sendActivity(`You're logged in!`);
