@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { Server, Request, Response, Next } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
+import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 import { BotAuthenticationConfiguration, ProviderConfiguration, DefaultProviderOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, ProviderAuthorizationUri } from './interfaces';
 import { ProviderType } from './enums';
@@ -21,7 +22,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 	private oauthEndpoints: OAuthEndpointsConfiguration;
 	private oauthClients: {
 		activeDirectory: OAuthClient;
-		github: OAuthClient;
 	}
 	private magicCode: string;
 	private currentAccessToken: string;
@@ -100,9 +100,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.server.get('/auth/activeDirectory/callback', (req: Request, res: Response, next: Next) => {
 			this.handleRedirect(req, res, next)
 		});
-		this.server.get('/auth/github/callback', (req: Request, res: Response, next: Next) => {
-			this.handleRedirect(req, res, next)
-		});
 		//passport providers ultimately redirect here
 		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
 			//providers using Passport have already exchanged the authorization code for an access token
@@ -114,31 +111,15 @@ export class BotAuthenticationMiddleware implements Middleware {
 	handleRedirect(req: Request, res: Response, next: Next) {
 		let code: string = req.query.code;
 		let magicCode: string = this.generateMagicCode();
-		//parse the selected provider passed over in query string state (from card)
-		let selectedOAuthClient: OAuthClient;
-		switch (req.query.state) {
-			case ProviderType.ActiveDirectory:
-				selectedOAuthClient = this.oauthClients.activeDirectory;
-				this.selectedProvider = ProviderType.ActiveDirectory;
-				break;
-			case ProviderType.Github:
-				selectedOAuthClient = this.oauthClients.github;
-				this.selectedProvider = ProviderType.Github;
-				break;
-			default:
-				selectedOAuthClient = this.oauthClients.activeDirectory;
-				this.selectedProvider = ProviderType.ActiveDirectory;
-				break;
-		}
 		//providers using OAuth must exchange the authorization code for access token
 		let tokenConfig: AuthorizationTokenConfig = {
 			code: code,
-			redirect_uri: `${this.baseUrl}/auth/${this.selectedProvider}/callback`
+			redirect_uri: `${this.baseUrl}/auth/activeDirectory/callback`
 		};
 		//exchange the authorization code for the access token
-		selectedOAuthClient.authorizationCode.getToken(tokenConfig)
+		this.oauthClients.activeDirectory.authorizationCode.getToken(tokenConfig)
 			.then((result: any) => {
-				const accessToken: AccessToken = selectedOAuthClient.accessToken.create(result);
+				const accessToken: AccessToken = this.oauthClients.activeDirectory.accessToken.create(result);
 				this.currentAccessToken = accessToken.token['access_token'] as string;
 				this.renderMagicCode(req, res, next, magicCode);
 			})
@@ -166,7 +147,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//---------------------------- PASSPORT INIT (Facebook, Google, and Twitter) -----------------------------//
+	//---------------------------- PASSPORT INIT (Facebook, Google, and GitHub) -----------------------------//
 
 	initializePassport() {
 		//initialize Passport
@@ -202,6 +183,27 @@ export class BotAuthenticationMiddleware implements Middleware {
 				}));
 		};
 
+		//GitHub
+		if (this.authenticationConfig.github) {
+			passport.use(new GitHubStrategy({
+				clientID: this.authenticationConfig.github.clientId,
+				clientSecret: this.authenticationConfig.github.clientSecret,
+				callbackURL: `${this.baseUrl}/auth/github/callback`
+			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
+				//store the access token on successful login (callback runs before successRedirect)
+				this.currentAccessToken = accessToken;
+				this.selectedProvider = ProviderType.Github;
+				done(null, profile);
+			}));
+			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
+			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
+			this.server.get('/auth/github/callback',
+				passport.authenticate('github', {
+					successRedirect: '/auth/callback',
+					failureRedirect: '/auth/failure'
+				}));
+		};
+
 		//Google
 		if (this.authenticationConfig.google) {
 			passport.use(new GoogleStrategy({
@@ -224,7 +226,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//------------------------------ OAUTH INIT (Active Directory and Github) --------------------------------//
+	//------------------------------ OAUTH INIT (Active Directory) --------------------------------//
 
 	initializeOAuth(): void {
 		//Initialize OAuthClients - overcome javascript errors without adding nullability
@@ -233,28 +235,24 @@ export class BotAuthenticationMiddleware implements Middleware {
 			auth: { tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl }
 		};
 		this.oauthClients = {
-			activeDirectory: createOAuth(initializationModule),
-			github: createOAuth(initializationModule)
+			activeDirectory: createOAuth(initializationModule)
 		}
 		//add providers the user passed configuration options for
 		if (this.authenticationConfig.activeDirectory) this.oauthClients.activeDirectory = this.createOAuthClient(ProviderType.ActiveDirectory);
-		if (this.authenticationConfig.github) this.oauthClients.github = this.createOAuthClient(ProviderType.Github);
 	};
 
 	createOAuthClient(provider: ProviderType): OAuthClient {
 		//take the provided client id and secret with the provider's default oauth endpoints to create an OAuth client
-		let providerConfig: ProviderConfiguration = provider === ProviderType.ActiveDirectory ? this.authenticationConfig.activeDirectory! : this.authenticationConfig.github!;
-		let oauthEndpoints: OAuthEndpoints = provider === ProviderType.ActiveDirectory ? this.oauthEndpoints.activeDirectory : this.oauthEndpoints.github;
 		const credentials: ModuleOptions = {
 			client: {
-				id: providerConfig.clientId,
-				secret: providerConfig.clientSecret
+				id: this.authenticationConfig.activeDirectory!.clientId,
+				secret: this.authenticationConfig.activeDirectory!.clientSecret
 			},
 			auth: {
-				authorizeHost: oauthEndpoints.authorizationBaseUrl,
-				authorizePath: oauthEndpoints.authorizationEndpoint,
-				tokenHost: oauthEndpoints.tokenBaseUrl,
-				tokenPath: oauthEndpoints.tokenEndpoint
+				authorizeHost: this.oauthEndpoints.activeDirectory.authorizationBaseUrl,
+				authorizePath: this.oauthEndpoints.activeDirectory.authorizationEndpoint,
+				tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl,
+				tokenPath: this.oauthEndpoints.activeDirectory.tokenEndpoint
 			}
 		};
 		return createOAuth(credentials);
@@ -342,14 +340,10 @@ export class BotAuthenticationMiddleware implements Middleware {
 			authorizationUris.push(adAuthorizationUri);
 		};
 		if (this.authenticationConfig.github) {
-			//github authorization uri is created via its oauth client 
+			//github authorization uri is the endpoint we set up in the Passport initialization
 			let githubAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Github,
-				authorizationUri: this.oauthClients.github.authorizationCode.authorizeURL({
-					redirect_uri: `${this.baseUrl}/auth/github/callback`,
-					scope: this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes,
-					state: ProviderType.Github
-				})
+				authorizationUri: `${this.baseUrl}/auth/github`
 			};
 			authorizationUris.push(githubAuthorizationUri);
 		};
