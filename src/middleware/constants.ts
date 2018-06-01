@@ -8,7 +8,9 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 	},
 	activeDirectory: {
 		scopes: ['User.Read'],
-		buttonText: 'Log in with Microsoft'
+		buttonText: 'Log in with Microsoft',
+		tenant: 'common',
+		resource: 'https://graph.windows.net'
 	},
 	google: {
 		scopes: ['https://www.googleapis.com/auth/plus.login'],

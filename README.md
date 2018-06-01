@@ -9,6 +9,7 @@
 1. [Custom Button Text](#text)
 1. [Custom Authentication Card](#card)
 1. [Custom Magic Code HTML](#code)
+1. [Custom Active Directory Tenants and Resources](#customazure)
 
 <div id='basic'></div>
 
@@ -103,12 +104,14 @@ Navigate to a supported provider's developer site and create a new application. 
 
 #### ProviderConfiguration
 
-| Property                        | Constraint    | Type                  | Description                                                                          |
-| ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
-| clientId                        | Required      | string                | ClientId taken from the provider's authentication application.                      |
-| clientSecret                    | Required      | string                | ClientSecret taken from the provider's authentication application.                  |
-| scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
-| buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
+| Property                        | Constraint    | Type                  | Providers                      | Description                                                                          |
+| ------------------------------- | ------------- | --------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
+| clientId                        | Required      | string                | All                            | ClientId taken from the provider's authentication application.                       |
+| clientSecret                    | Required      | string                | All                            | ClientSecret taken from the provider's authentication application.                   |
+| scopes                          | Optional      | string[]              | All                            | Scopes that the user will be asked to consent to as part of the authentication flow. |
+| buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
+| tenant                          | Optional      | string                | Active Directory V2            | Organizational tenant domain.                                                        |
+| resource                        | Optional      | string                | Active Directory V2            | identifier of the WebAPI that your client wants to access on behalf of the user.     |
 
 <div id='env'></div>
 
@@ -180,6 +183,7 @@ facebook: {
 	clientSecret: 'FACEBOOK_CLIENT_SECRET'
 }
 ```
+
 #### Example Custom Scopes
 
 ```javascript
@@ -211,6 +215,7 @@ facebook: {
 	clientSecret: 'FACEBOOK_CLIENT_SECRET'
 }
 ```
+
 #### Example Custom Button Text
 
 ```javascript
@@ -394,4 +399,37 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
     </script>
 </body>
 </html>
+```
+
+<div id='customazure'></div>
+
+## Custom Active Directory Tenants and Resources
+
+The Active Directory provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
+
+| Property                 | Default Value                              |
+| ------------------------ | ------------------------------------------ |
+| tenant                   | common                                     |
+| resource                 | https://graph.windows.net                  |
+
+
+#### Default Tenant and Resource
+
+```javascript
+activeDirectory: {
+	clientId: 'ACTIVE_DIRECTORY_CLIENT_ID',
+	clientSecret: 'ACTIVE_DIRECTORY_CLIENT_SECRET'
+}
+```
+
+#### Example Custom Tenant and Resource
+
+```javascript
+activeDirectory: {
+	clientId: 'ACTIVE_DIRECTORY_CLIENT_ID',
+	clientSecret: 'ACTIVE_DIRECTORY_CLIENT_SECRET',
+	tenant: 'microsoft.onmicrosoft.com',
+	//VSTS API resource
+	resource: '499b84ac-1321-427f-aa17-267ca6975798'
+}
 ```

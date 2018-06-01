@@ -57,7 +57,9 @@ const authenticationConfig = {
 	activeDirectory: {
 		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
 		clientSecret: 'bhchfIQN348[^foKKOG54||',
-		scopes: ['User.Read', 'User.ReadBasic.All']
+		scopes: ['User.Read', 'User.ReadBasic.All'],
+		tenant: 'microsoft.onmicrosoft.com',
+		resource: '499b84ac-1321-427f-aa17-267ca6975798'
 	},
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',

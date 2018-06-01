@@ -10,10 +10,10 @@ export interface BotAuthenticationConfiguration {
 	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
 	onLoginFailure?: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
 	customAuthenticationCardGenerator?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
-	customMagicCodeRedirectEndpoint?: string; 
+	customMagicCodeRedirectEndpoint?: string;
 	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
-	activeDirectory?: ProviderConfiguration;
+	activeDirectory?: ActiveDirectoryConfiguration;
 	google?: ProviderConfiguration;
 	github?: ProviderConfiguration;
 }
@@ -25,6 +25,11 @@ export interface ProviderConfiguration {
 	buttonText?: string;
 }
 
+export interface ActiveDirectoryConfiguration extends ProviderConfiguration {
+	tenant?: string;
+	resource?: string
+}
+
 export interface ProviderAuthorizationUri {
 	provider: ProviderType;
 	authorizationUri: string;
@@ -34,7 +39,7 @@ export interface ProviderAuthorizationUri {
 
 export interface DefaultProviderOptions {
 	facebook: ProviderDefaults;
-	activeDirectory: ProviderDefaults;
+	activeDirectory: ActiveDirectoryDefaults;
 	google: ProviderDefaults;
 	github: ProviderDefaults;
 }
@@ -42,4 +47,9 @@ export interface DefaultProviderOptions {
 export interface ProviderDefaults {
 	scopes: string[];
 	buttonText: string;
+}
+
+export interface ActiveDirectoryDefaults extends ProviderDefaults {
+	tenant: string;
+	resource: string;
 }

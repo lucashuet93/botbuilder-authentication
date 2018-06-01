@@ -182,20 +182,22 @@ export class BotAuthenticationMiddleware implements Middleware {
 		//Active Directory
 		if (this.authenticationConfig.activeDirectory) {
 			let activeDirectoryScope: string[] = this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : defaultProviderOptions.activeDirectory.scopes;
+			let activeDirectoryResource: string = this.authenticationConfig.activeDirectory.resource ? this.authenticationConfig.activeDirectory.resource : defaultProviderOptions.activeDirectory.resource;
+			let activeDirectoryTenant: string = this.authenticationConfig.activeDirectory && this.authenticationConfig.activeDirectory.tenant ? this.authenticationConfig.activeDirectory.tenant : defaultProviderOptions.activeDirectory.tenant;
 			passport.use(new AzureAdOAuth2Strategy({
 				clientID: this.authenticationConfig.activeDirectory.clientId,
 				clientSecret: this.authenticationConfig.activeDirectory.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/activeDirectory/callback`,
 				scope: activeDirectoryScope,
-				resource: 'https://graph.windows.net',
-				tenant: 'microsoft.onmicrosoft.com'
+				resource: activeDirectoryResource,
+				tenant: activeDirectoryTenant
 			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
 				this.currentAccessToken = accessToken;
 				this.selectedProvider = ProviderType.ActiveDirectory;
 				done(null, profile);
 			}));
 			this.server.get('/auth/activeDirectory', passport.authenticate('azure_ad_oauth2'));
-			this.server.get('/auth/activeDirectory/callback', passport.authenticate('azure_ad_oauth2', { session: false, successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get('/auth/activeDirectory/callback', passport.authenticate('azure_ad_oauth2', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 	};
 
@@ -227,11 +229,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 			};
 		};
 		if (process.env.ACTIVE_DIRECTORY_CLIENT_ID && process.env.ACTIVE_DIRECTORY_CLIENT_SECRET) {
+			let activeDirectoryTenant: string = this.authenticationConfig.activeDirectory && this.authenticationConfig.activeDirectory.tenant ? this.authenticationConfig.activeDirectory.tenant : defaultProviderOptions.activeDirectory.tenant;
 			this.authenticationConfig = {
 				...this.authenticationConfig, activeDirectory: {
 					... this.authenticationConfig.activeDirectory,
 					clientId: process.env.ACTIVE_DIRECTORY_CLIENT_ID as string,
-					clientSecret: process.env.ACTIVE_DIRECTORY_CLIENT_SECRET as string
+					clientSecret: process.env.ACTIVE_DIRECTORY_CLIENT_SECRET as string,
+					tenant: activeDirectoryTenant
 				}
 			};
 		};
