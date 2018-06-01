@@ -1,5 +1,4 @@
 import { TurnContext, Activity } from 'botbuilder';
-import { AccessToken } from 'simple-oauth2';
 import { Request, Response, Next } from 'restify';
 import { ProviderType } from './enums';
 

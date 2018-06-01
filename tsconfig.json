@@ -11,5 +11,7 @@
   "exclude": [
     "src/samples/**/*",
     "src/images/**/*",
+    "lib",
+    "node_modules"
   ]
 }

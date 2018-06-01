@@ -81,7 +81,7 @@ Navigate to a supported provider's developer site and create a new application. 
 
 ## Samples
 
-**/src/samples** contains basic examples with minimal configuration and advanced examples that implement each of the optional configuration properties, for both JavaScript and TypeScript.
+The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tree/master/src/samples "samples") folder contains basic examples with minimal configuration and advanced examples that implement each of the optional configuration properties, for both JavaScript and TypeScript.
 
 <div id='properties'></div>
 
