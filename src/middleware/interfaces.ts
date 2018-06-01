@@ -43,17 +43,3 @@ export interface ProviderDefaults {
 	scopes: string[];
 	buttonText: string;
 }
-
-//-------------------------------------- OAUTH ENDPOINTS -------------------------------------//
-
-export interface OAuthEndpointsConfiguration {
-	activeDirectory: OAuthEndpoints;
-	github: OAuthEndpoints;
-}
-
-export interface OAuthEndpoints {
-	tokenBaseUrl: string;
-	tokenEndpoint: string;
-	authorizationBaseUrl: string;
-	authorizationEndpoint: string;
-}

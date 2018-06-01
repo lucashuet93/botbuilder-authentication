@@ -211,7 +211,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 				this.selectedProvider = ProviderType.ActiveDirectory;
 				done(null, profile);
 			}));
-			this.server.get('/auth/activeDirectory', passport.authenticate('azure_ad_oauth2', { session: false }));
+			this.server.get('/auth/activeDirectory', passport.authenticate('azure_ad_oauth2'));
 			this.server.get('/auth/activeDirectory/callback',
 				passport.authenticate('azure_ad_oauth2', {
 					session: false,
