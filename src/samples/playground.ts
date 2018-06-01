@@ -52,7 +52,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24',
 	},
-	activeDirectory: {
+	azureADv2: {
 		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
 		clientSecret: 'bhchfIQN348[^foKKOG54||',
 	},

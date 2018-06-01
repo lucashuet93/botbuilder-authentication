@@ -1,5 +1,5 @@
 export enum ProviderType {
-	ActiveDirectory = 'activeDirectory',
+	AzureADv2 = 'azureADv2',
 	Facebook = 'facebook',
 	Google = 'google',
 	Github = 'github'

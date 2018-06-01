@@ -54,7 +54,7 @@ const authenticationConfig = {
 		clientSecret: '482d08e1fa468e10d478ccc772452f24',
 		scopes: ['public_profile', 'email', 'user_likes']
 	},
-	activeDirectory: {
+	azureADv2: {
 		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
 		clientSecret: 'bhchfIQN348[^foKKOG54||',
 		scopes: ['User.Read', 'User.ReadBasic.All'],
@@ -76,7 +76,7 @@ const authenticationConfig = {
 		let cardActions = [];
 		let buttonTitle;
 		authorizationUris.map((auth) => {
-			if (auth.provider === 'activeDirectory') {
+			if (auth.provider === 'azureADv2') {
 				buttonTitle = 'Microsoft';
 			} else if (auth.provider === 'facebook') {
 				buttonTitle = 'Facebook';

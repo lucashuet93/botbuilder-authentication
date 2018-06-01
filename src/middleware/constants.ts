@@ -6,7 +6,7 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 		scopes: ['public_profile'],
 		buttonText: 'Log in with Facebook'
 	},
-	activeDirectory: {
+	azureADv2: {
 		scopes: ['User.Read'],
 		buttonText: 'Log in with Microsoft',
 		tenant: 'common',

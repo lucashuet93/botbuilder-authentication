@@ -9,7 +9,7 @@
 1. [Custom Button Text](#text)
 1. [Custom Authentication Card](#card)
 1. [Custom Magic Code HTML](#code)
-1. [Custom Active Directory Tenants and Resources](#customazure)
+1. [Custom Azure AD Tenants and Resources](#customazure)
 
 <div id='basic'></div>
 
@@ -72,7 +72,7 @@ Navigate to a supported provider's developer site and create a new application. 
 
 | Supported Providers | Redirect URL                             | Developer Site                         |
 | ------------------- | ---------------------------------------- | -------------------------------------- |
-| Active Directory V2 | {BASE_URL}/auth/activeDirectory/callback | https://apps.dev.microsoft.com         |
+| Azure AD V2         | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
 | Facebook            | {BASE_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
 | Google              | {BASE_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
 | GitHub              | {BASE_URL}/auth/github/callback          | https://github.com/settings/developers |
@@ -98,7 +98,7 @@ Navigate to a supported provider's developer site and create a new application. 
 | customMagicCodeRedirectEndpoint    | Optional      | string                                                                | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
 | noUserFoundMessage                 | Optional      | string                                                                | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
 | facebook                           | Optional      | ProviderConfiguration                                                 | Configuration object that enabes Facebook authentication. |
-| activeDirectory                    | Optional      | ProviderConfiguration                                                 | Configuration object that enables Azure AD V2 authentication. |
+| azureADv2                          | Optional      | ProviderConfiguration                                                 | Configuration object that enables Azure AD V2 authentication. |
 | google                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables Google authentication. |
 | github                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables GitHub authentication. |
 
@@ -110,8 +110,8 @@ Navigate to a supported provider's developer site and create a new application. 
 | clientSecret                    | Required      | string                | All                            | ClientSecret taken from the provider's authentication application.                   |
 | scopes                          | Optional      | string[]              | All                            | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
-| tenant                          | Optional      | string                | Active Directory V2            | Organizational tenant domain.                                                        |
-| resource                        | Optional      | string                | Active Directory V2            | identifier of the WebAPI that your client wants to access on behalf of the user.     |
+| tenant                          | Optional      | string                | Azure AD V2                    | Organizational tenant domain.                                                        |
+| resource                        | Optional      | string                | Azure AD V2                    | identifier of the WebAPI that your client wants to access on behalf of the user.     |
 
 <div id='env'></div>
 
@@ -123,8 +123,8 @@ Provider clientIds and clientSecrets can be set via environment variables and do
 | ---------------------------------------- | ------------------------------------------ |
 | facebook.clientId                        | FACEBOOK_CLIENT_ID                         |
 | facebook.clientSecret                    | FACEBOOK_CLIENT_SECRET                     |
-| activeDirectory.clientId                 | ACTIVE_DIRECTORY_CLIENT_ID                 |
-| activeDirectory.clientSecret             | ACTIVE_DIRECTORY_CLIENT_SECRET             |
+| azureADv2.clientId                       | AZURE_AD_V2_CLIENT_ID                      |
+| azureADv2.clientSecret                   | AZURE_AD_V2_CLIENT_SECRET                  |
 | google.clientId                          | GOOGLE_CLIENT_ID                           |
 | google.clientSecret                      | GOOGLE_CLIENT_SECRET                       |
 | github.clientId                          | GITHUB_CLIENT_ID                           |
@@ -135,8 +135,8 @@ Provider clientIds and clientSecrets can be set via environment variables and do
 ```
 FACEBOOK_CLIENT_ID = {VALUE}
 FACEBOOK_CLIENT_SECRET =  {VALUE}
-ACTIVE_DIRECTORY_CLIENT_ID =  {VALUE}
-ACTIVE_DIRECTORY_CLIENT_SECRET = {VALUE}
+AZURE_AD_V2_CLIENT_ID =  {VALUE}
+AZURE_AD_V2_CLIENT_SECRET = {VALUE}
 ```
 
 #### Example BotAuthenticationConfiguration
@@ -170,7 +170,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Scopes                                     |
 | ------------------------ | ------------------------------------------ |
-| Active Directory V2      | User.Read                                  |
+| Azure AD V2              | User.Read                                  |
 | Facebook                 | public_profile                             |
 | Google                   | https://www.googleapis.com/auth/plus.login |
 | GitHub                   | user                                       |
@@ -202,7 +202,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Button Text                                |
 | ------------------------ | ------------------------------------------ |
-| Active Directory V2      | Log in with Microsoft                      |
+| Azure AD V2              | Log in with Microsoft                      |
 | Facebook                 | Log in with Facebook                       |
 | Google                   | Log in with Google+                        |
 | GitHub                   | Log in with GitHub                         |
@@ -245,7 +245,7 @@ customAuthenticationCardGenerator: async (context, authorizationUris) => {
 	let cardActions = [];
 	let buttonTitle;
 	authorizationUris.map((auth) => {
-		if (auth.provider === 'activeDirectory') {
+		if (auth.provider === 'azureADv2') {
 			buttonTitle = 'Microsoft';
 		} else if (auth.provider === 'facebook') {
 			buttonTitle = 'Facebook';
@@ -403,9 +403,9 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 
 <div id='customazure'></div>
 
-## Custom Active Directory Tenants and Resources
+## Custom Azure AD Tenants and Resources
 
-The Active Directory provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
+The Azure AD V2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
 
 | Property                 | Default Value                              |
 | ------------------------ | ------------------------------------------ |
@@ -416,18 +416,18 @@ The Active Directory provider declared in the ```BotAuthenticationConfiguration`
 #### Default Tenant and Resource
 
 ```javascript
-activeDirectory: {
-	clientId: 'ACTIVE_DIRECTORY_CLIENT_ID',
-	clientSecret: 'ACTIVE_DIRECTORY_CLIENT_SECRET'
+azureADv2: {
+	clientId: 'AZURE_AD_V2_CLIENT_ID',
+	clientSecret: 'AZURE_AD_V2_CLIENT_SECRET'
 }
 ```
 
 #### Example Custom Tenant and Resource
 
 ```javascript
-activeDirectory: {
-	clientId: 'ACTIVE_DIRECTORY_CLIENT_ID',
-	clientSecret: 'ACTIVE_DIRECTORY_CLIENT_SECRET',
+azureADv2: {
+	clientId: 'AZURE_AD_V2_CLIENT_ID',
+	clientSecret: 'AZURE_AD_V2_CLIENT_SECRET',
 	tenant: 'microsoft.onmicrosoft.com',
 	//VSTS API resource
 	resource: '499b84ac-1321-427f-aa17-267ca6975798'

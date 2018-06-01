@@ -13,7 +13,7 @@ export interface BotAuthenticationConfiguration {
 	customMagicCodeRedirectEndpoint?: string;
 	noUserFoundMessage?: string;
 	facebook?: ProviderConfiguration;
-	activeDirectory?: ActiveDirectoryConfiguration;
+	azureADv2?: AzureADv2Configuration;
 	google?: ProviderConfiguration;
 	github?: ProviderConfiguration;
 }
@@ -25,7 +25,7 @@ export interface ProviderConfiguration {
 	buttonText?: string;
 }
 
-export interface ActiveDirectoryConfiguration extends ProviderConfiguration {
+export interface AzureADv2Configuration extends ProviderConfiguration {
 	tenant?: string;
 	resource?: string
 }
@@ -39,7 +39,7 @@ export interface ProviderAuthorizationUri {
 
 export interface DefaultProviderOptions {
 	facebook: ProviderDefaults;
-	activeDirectory: ActiveDirectoryDefaults;
+	azureADv2: AzureADv2Defaults;
 	google: ProviderDefaults;
 	github: ProviderDefaults;
 }
@@ -49,7 +49,7 @@ export interface ProviderDefaults {
 	buttonText: string;
 }
 
-export interface ActiveDirectoryDefaults extends ProviderDefaults {
+export interface AzureADv2Defaults extends ProviderDefaults {
 	tenant: string;
 	resource: string;
 }

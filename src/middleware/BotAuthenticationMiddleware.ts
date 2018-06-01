@@ -179,25 +179,25 @@ export class BotAuthenticationMiddleware implements Middleware {
 			this.server.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
-		//Active Directory
-		if (this.authenticationConfig.activeDirectory) {
-			let activeDirectoryScope: string[] = this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : defaultProviderOptions.activeDirectory.scopes;
-			let activeDirectoryResource: string = this.authenticationConfig.activeDirectory.resource ? this.authenticationConfig.activeDirectory.resource : defaultProviderOptions.activeDirectory.resource;
-			let activeDirectoryTenant: string = this.authenticationConfig.activeDirectory && this.authenticationConfig.activeDirectory.tenant ? this.authenticationConfig.activeDirectory.tenant : defaultProviderOptions.activeDirectory.tenant;
+		//Azure AD v2
+		if (this.authenticationConfig.azureADv2) {
+			let azureADv2Scope: string[] = this.authenticationConfig.azureADv2.scopes ? this.authenticationConfig.azureADv2.scopes : defaultProviderOptions.azureADv2.scopes;
+			let azureADv2Resource: string = this.authenticationConfig.azureADv2.resource ? this.authenticationConfig.azureADv2.resource : defaultProviderOptions.azureADv2.resource;
+			let azureADv2Tenant: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
 			passport.use(new AzureAdOAuth2Strategy({
-				clientID: this.authenticationConfig.activeDirectory.clientId,
-				clientSecret: this.authenticationConfig.activeDirectory.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/activeDirectory/callback`,
-				scope: activeDirectoryScope,
-				resource: activeDirectoryResource,
-				tenant: activeDirectoryTenant
+				clientID: this.authenticationConfig.azureADv2.clientId,
+				clientSecret: this.authenticationConfig.azureADv2.clientSecret,
+				callbackURL: `${this.baseUrl}/auth/azureADv2/callback`,
+				scope: azureADv2Scope,
+				resource: azureADv2Resource,
+				tenant: azureADv2Tenant
 			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
 				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.ActiveDirectory;
+				this.selectedProvider = ProviderType.AzureADv2;
 				done(null, profile);
 			}));
-			this.server.get('/auth/activeDirectory', passport.authenticate('azure_ad_oauth2'));
-			this.server.get('/auth/activeDirectory/callback', passport.authenticate('azure_ad_oauth2', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get('/auth/azureADv2', passport.authenticate('azure_ad_oauth2'));
+			this.server.get('/auth/azureADv2/callback', passport.authenticate('azure_ad_oauth2', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 	};
 
@@ -228,14 +228,14 @@ export class BotAuthenticationMiddleware implements Middleware {
 				}
 			};
 		};
-		if (process.env.ACTIVE_DIRECTORY_CLIENT_ID && process.env.ACTIVE_DIRECTORY_CLIENT_SECRET) {
-			let activeDirectoryTenant: string = this.authenticationConfig.activeDirectory && this.authenticationConfig.activeDirectory.tenant ? this.authenticationConfig.activeDirectory.tenant : defaultProviderOptions.activeDirectory.tenant;
+		if (process.env.AZURE_AD_V2_CLIENT_ID && process.env.AZURE_AD_V2_CLIENT_SECRET) {
+			let azureADv2Tenant: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
 			this.authenticationConfig = {
-				...this.authenticationConfig, activeDirectory: {
-					... this.authenticationConfig.activeDirectory,
-					clientId: process.env.ACTIVE_DIRECTORY_CLIENT_ID as string,
-					clientSecret: process.env.ACTIVE_DIRECTORY_CLIENT_SECRET as string,
-					tenant: activeDirectoryTenant
+				...this.authenticationConfig, azureADv2: {
+					... this.authenticationConfig.azureADv2,
+					clientId: process.env.AZURE_AD_V2_CLIENT_ID as string,
+					clientSecret: process.env.AZURE_AD_V2_CLIENT_SECRET as string,
+					tenant: azureADv2Tenant
 				}
 			};
 		};
@@ -257,7 +257,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		let authorizationUris: ProviderAuthorizationUri[] = [];
 		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
 		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/auth/google` });
-		if (this.authenticationConfig.activeDirectory) authorizationUris.push({ provider: ProviderType.ActiveDirectory, authorizationUri: `${this.baseUrl}/auth/activeDirectory` });
+		if (this.authenticationConfig.azureADv2) authorizationUris.push({ provider: ProviderType.AzureADv2, authorizationUri: `${this.baseUrl}/auth/azureADv2` });
 		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
 		return authorizationUris;
 	};
@@ -272,9 +272,9 @@ export class BotAuthenticationMiddleware implements Middleware {
 			let cardActions: CardAction[] = [];
 			let buttonTitle: string;
 			authorizationUris.map((providerAuthUri: ProviderAuthorizationUri) => {
-				if (providerAuthUri.provider === ProviderType.ActiveDirectory) {
-					//we can be sure activeDirectory is not undefined given the Provider Type
-					buttonTitle = (this.authenticationConfig.activeDirectory!.buttonText ? this.authenticationConfig.activeDirectory!.buttonText : defaultProviderOptions.activeDirectory.buttonText) as string;
+				if (providerAuthUri.provider === ProviderType.AzureADv2) {
+					//we can be sure azureADv2 is not undefined given the Provider Type
+					buttonTitle = (this.authenticationConfig.azureADv2!.buttonText ? this.authenticationConfig.azureADv2!.buttonText : defaultProviderOptions.azureADv2.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Facebook) {
 					buttonTitle = (this.authenticationConfig.facebook!.buttonText ? this.authenticationConfig.facebook!.buttonText : defaultProviderOptions.facebook.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Google) {
@@ -288,11 +288,5 @@ export class BotAuthenticationMiddleware implements Middleware {
 			let authMessage: Partial<Activity> = MessageFactory.attachment(card);
 			return authMessage;
 		};
-	};
-
-	flatMapActiveDirectoryScopes(scopes: string[]): string[] {
-		//Active Directory expects a space delimited list of scopes, not commas. Flat map all the scopes into a single string
-		let flatMappedScope = scopes.join(' ');
-		return [flatMappedScope];
 	};
 };
