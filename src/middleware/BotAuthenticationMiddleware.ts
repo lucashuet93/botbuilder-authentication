@@ -1,16 +1,16 @@
 import * as restify from 'restify';
 import * as passport from 'passport-restify';
 import * as dotenv from 'dotenv';
-import { create as createOAuth, ModuleOptions, OAuthClient, AccessToken, Token, AuthorizationTokenConfig } from 'simple-oauth2';
+import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
 import { randomBytes } from 'crypto';
 import { Server, Request, Response, Next } from 'restify';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
-import { BotAuthenticationConfiguration, ProviderConfiguration, DefaultProviderOptions, ProviderDefaults, OAuthEndpointsConfiguration, OAuthEndpoints, ProviderAuthorizationUri } from './interfaces';
+import { BotAuthenticationConfiguration, ProviderConfiguration, DefaultProviderOptions, ProviderDefaults, ProviderAuthorizationUri } from './interfaces';
 import { ProviderType } from './enums';
-import { defaultProviderOptions, defaultOAuthEndpoints } from './constants';
+import { defaultProviderOptions } from './constants';
 
 export class BotAuthenticationMiddleware implements Middleware {
 
@@ -19,10 +19,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
 	private callbackURL: string;
-	private oauthEndpoints: OAuthEndpointsConfiguration;
-	private oauthClients: {
-		activeDirectory: OAuthClient;
-	}
 	private magicCode: string;
 	private currentAccessToken: string;
 	private sentCode: boolean;
@@ -32,13 +28,11 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.server = server;
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
-		this.oauthEndpoints = defaultOAuthEndpoints;
 		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}` : this.server.address().address;
 		this.callbackURL = `${this.baseUrl}/auth/callback`;
 		this.initializeEnvironmentVariables();
-		this.initializeOAuth();
 		this.initializePassport();
-		this.createRedirectEndpoints();
+		this.initializeRedirectEndpoints();
 	};
 
 	async onTurn(context: TurnContext, next: Function): Promise<void> {
@@ -88,7 +82,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
 
-	createRedirectEndpoints(): void {
+	initializeRedirectEndpoints(): void {
 		//add plugins necessary for Passport
 		this.server.use(restify.plugins.queryParser());
 		this.server.use(restify.plugins.bodyParser());
@@ -96,36 +90,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.server.get('/auth/failure', (req: Request, res: Response, next: Next) => {
 			res.send(`Authentication Failed`);
 		});
-		//create redirect endpoints for login success
-		this.server.get('/auth/activeDirectory/callback', (req: Request, res: Response, next: Next) => {
-			this.handleRedirect(req, res, next)
-		});
 		//passport providers ultimately redirect here
 		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
 			//providers using Passport have already exchanged the authorization code for an access token
 			let magicCode: string = this.generateMagicCode();
 			this.renderMagicCode(req, res, next, magicCode);
 		});
-	};
-
-	handleRedirect(req: Request, res: Response, next: Next) {
-		let code: string = req.query.code;
-		let magicCode: string = this.generateMagicCode();
-		//providers using OAuth must exchange the authorization code for access token
-		let tokenConfig: AuthorizationTokenConfig = {
-			code: code,
-			redirect_uri: `${this.baseUrl}/auth/activeDirectory/callback`
-		};
-		//exchange the authorization code for the access token
-		this.oauthClients.activeDirectory.authorizationCode.getToken(tokenConfig)
-			.then((result: any) => {
-				const accessToken: AccessToken = this.oauthClients.activeDirectory.accessToken.create(result);
-				this.currentAccessToken = accessToken.token['access_token'] as string;
-				this.renderMagicCode(req, res, next, magicCode);
-			})
-			.catch((error: any) => {
-				console.log('Access Token Error', error);
-			});
 	};
 
 	generateMagicCode(): string {
@@ -224,38 +194,31 @@ export class BotAuthenticationMiddleware implements Middleware {
 					failureRedirect: '/auth/failure'
 				}));
 		};
-	};
 
-	//------------------------------ OAUTH INIT (Active Directory) --------------------------------//
-
-	initializeOAuth(): void {
-		//Initialize OAuthClients - overcome javascript errors without adding nullability
-		let initializationModule: ModuleOptions = {
-			client: { id: '', secret: '', },
-			auth: { tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl }
+		//Active Directory
+		if (this.authenticationConfig.activeDirectory) {
+			let activeDirectoryScope: string[] = this.authenticationConfig.activeDirectory.scopes ? this.authenticationConfig.activeDirectory.scopes : defaultProviderOptions.activeDirectory.scopes;
+			passport.use(new AzureAdOAuth2Strategy({
+				clientID: this.authenticationConfig.activeDirectory.clientId,
+				clientSecret: this.authenticationConfig.activeDirectory.clientSecret,
+				callbackURL: `${this.baseUrl}/auth/activeDirectory/callback`,
+				scope: activeDirectoryScope,
+				resource: 'https://graph.windows.net',
+				tenant: 'microsoft.onmicrosoft.com'
+			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
+				//store the access token on successful login (callback runs before successRedirect)
+				this.currentAccessToken = accessToken;
+				this.selectedProvider = ProviderType.ActiveDirectory;
+				done(null, profile);
+			}));
+			this.server.get('/auth/activeDirectory', passport.authenticate('azure_ad_oauth2', { session: false }));
+			this.server.get('/auth/activeDirectory/callback',
+				passport.authenticate('azure_ad_oauth2', {
+					session: false,
+					successRedirect: '/auth/callback',
+					failureRedirect: '/auth/failure'
+				}));
 		};
-		this.oauthClients = {
-			activeDirectory: createOAuth(initializationModule)
-		}
-		//add providers the user passed configuration options for
-		if (this.authenticationConfig.activeDirectory) this.oauthClients.activeDirectory = this.createOAuthClient(ProviderType.ActiveDirectory);
-	};
-
-	createOAuthClient(provider: ProviderType): OAuthClient {
-		//take the provided client id and secret with the provider's default oauth endpoints to create an OAuth client
-		const credentials: ModuleOptions = {
-			client: {
-				id: this.authenticationConfig.activeDirectory!.clientId,
-				secret: this.authenticationConfig.activeDirectory!.clientSecret
-			},
-			auth: {
-				authorizeHost: this.oauthEndpoints.activeDirectory.authorizationBaseUrl,
-				authorizePath: this.oauthEndpoints.activeDirectory.authorizationEndpoint,
-				tokenHost: this.oauthEndpoints.activeDirectory.tokenBaseUrl,
-				tokenPath: this.oauthEndpoints.activeDirectory.tokenEndpoint
-			}
-		};
-		return createOAuth(credentials);
 	};
 
 	//--------------------------------------- ENVIRONMENT VARIABLES ------------------------------------------//
@@ -310,8 +273,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 	createAuthorizationUris(): ProviderAuthorizationUri[] {
 		//Pass the proper authorization uris back to the user
 		let authorizationUris: ProviderAuthorizationUri[] = [];
+		//authorization uris are the endpoints set up in the Passport initialization
 		if (this.authenticationConfig.facebook) {
-			//facebook authorization uri is the endpoint we set up in the Passport initialization
 			let facebookAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Facebook,
 				authorizationUri: `${this.baseUrl}/auth/facebook`
@@ -319,33 +282,25 @@ export class BotAuthenticationMiddleware implements Middleware {
 			authorizationUris.push(facebookAuthorizationUri);
 		};
 		if (this.authenticationConfig.google) {
-			//google authorization uri is the endpoint we set up in the Passport initialization
 			let googleAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Google,
 				authorizationUri: `${this.baseUrl}/auth/google`
 			};
 			authorizationUris.push(googleAuthorizationUri);
 		};
-		if (this.authenticationConfig.activeDirectory) {
-			//active directory authorization uri is created via its oauth client 
-			let activeDirectoryScope = this.authenticationConfig.activeDirectory.scopes ? this.flatMapActiveDirectoryScopes(this.authenticationConfig.activeDirectory.scopes) : defaultProviderOptions.activeDirectory.scopes
-			let adAuthorizationUri: ProviderAuthorizationUri = {
-				provider: ProviderType.ActiveDirectory,
-				authorizationUri: this.oauthClients.activeDirectory.authorizationCode.authorizeURL({
-					redirect_uri: `${this.baseUrl}/auth/activeDirectory/callback`,
-					scope: activeDirectoryScope,
-					state: ProviderType.ActiveDirectory
-				})
-			};
-			authorizationUris.push(adAuthorizationUri);
-		};
 		if (this.authenticationConfig.github) {
-			//github authorization uri is the endpoint we set up in the Passport initialization
 			let githubAuthorizationUri: ProviderAuthorizationUri = {
 				provider: ProviderType.Github,
 				authorizationUri: `${this.baseUrl}/auth/github`
 			};
 			authorizationUris.push(githubAuthorizationUri);
+		};
+		if (this.authenticationConfig.activeDirectory) {
+			let activeDirectoryAuthorizationUri: ProviderAuthorizationUri = {
+				provider: ProviderType.ActiveDirectory,
+				authorizationUri: `${this.baseUrl}/auth/activeDirectory`
+			};
+			authorizationUris.push(activeDirectoryAuthorizationUri);
 		};
 		return authorizationUris;
 	};
