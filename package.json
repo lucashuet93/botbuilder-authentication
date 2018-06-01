@@ -2,7 +2,22 @@
   "name": "botbuilder-simple-authentication",
   "version": "1.0.0",
   "description": "Authentication middleware for the Microsoft Bot Framework v4 designed to simplify the auth process.",
-  "main": "index.js",
+  "keywords": [
+    "botbuilder",
+    "bots",
+    "authentication",
+    "auth",
+    "simple"
+  ],
+  "bugs": {
+    "url": "https://github.com/lucashuet93/botbuilder-simple-authentication/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucashuet93/botbuilder-simple-authentication.git"
+  },
+  "main": "./lib/botbuilder-simple-authentication.js",
+  "typings": "./lib/botbuilder-simple-authentication.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

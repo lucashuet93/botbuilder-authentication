@@ -72,8 +72,8 @@ Navigate to a supported provider's developer site and create a new application. 
 
 | Supported Providers | Redirect URL                             | Developer Site                         |
 | ------------------- | ---------------------------------------- | -------------------------------------- |
-| AzureADv2           | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
 | Facebook            | {BASE_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
+| AzureADv2           | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
 | Google              | {BASE_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
 | GitHub              | {BASE_URL}/auth/github/callback          | https://github.com/settings/developers |
 
