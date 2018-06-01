@@ -72,7 +72,7 @@ Navigate to a supported provider's developer site and create a new application. 
 
 | Supported Providers | Redirect URL                             | Developer Site                         |
 | ------------------- | ---------------------------------------- | -------------------------------------- |
-| Azure AD V2         | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
+| AzureADv2           | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
 | Facebook            | {BASE_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
 | Google              | {BASE_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
 | GitHub              | {BASE_URL}/auth/github/callback          | https://github.com/settings/developers |
@@ -98,7 +98,7 @@ Navigate to a supported provider's developer site and create a new application. 
 | customMagicCodeRedirectEndpoint    | Optional      | string                                                                | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
 | noUserFoundMessage                 | Optional      | string                                                                | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
 | facebook                           | Optional      | ProviderConfiguration                                                 | Configuration object that enabes Facebook authentication. |
-| azureADv2                          | Optional      | ProviderConfiguration                                                 | Configuration object that enables Azure AD V2 authentication. |
+| azureADv2                          | Optional      | ProviderConfiguration                                                 | Configuration object that enables AzureADv2 authentication. |
 | google                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables Google authentication. |
 | github                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables GitHub authentication. |
 
@@ -110,8 +110,8 @@ Navigate to a supported provider's developer site and create a new application. 
 | clientSecret                    | Required      | string                | All                            | ClientSecret taken from the provider's authentication application.                   |
 | scopes                          | Optional      | string[]              | All                            | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
-| tenant                          | Optional      | string                | Azure AD V2                    | Organizational tenant domain.                                                        |
-| resource                        | Optional      | string                | Azure AD V2                    | identifier of the WebAPI that your client wants to access on behalf of the user.     |
+| tenant                          | Optional      | string                | AzureADv2                      | Organizational tenant domain.                                                        |
+| resource                        | Optional      | string                | AzureADv2                      | identifier of the WebAPI that your client wants to access on behalf of the user.     |
 
 <div id='env'></div>
 
@@ -170,7 +170,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Scopes                                     |
 | ------------------------ | ------------------------------------------ |
-| Azure AD V2              | User.Read                                  |
+| AzureADv2              | User.Read                                  |
 | Facebook                 | public_profile                             |
 | Google                   | https://www.googleapis.com/auth/plus.login |
 | GitHub                   | user                                       |
@@ -202,7 +202,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Button Text                                |
 | ------------------------ | ------------------------------------------ |
-| Azure AD V2              | Log in with Microsoft                      |
+| AzureADv2              | Log in with Microsoft                      |
 | Facebook                 | Log in with Facebook                       |
 | Google                   | Log in with Google+                        |
 | GitHub                   | Log in with GitHub                         |
@@ -405,7 +405,7 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 
 ## Custom Azure AD Tenants and Resources
 
-The Azure AD V2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
+The AzureADv2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
 
 | Property                 | Default Value                              |
 | ------------------------ | ------------------------------------------ |

@@ -108,4 +108,3 @@ server.get('/renderCustomCode', plugins.serveStatic({
 }));
 
 adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
-

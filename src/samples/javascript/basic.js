@@ -47,4 +47,3 @@ const authenticationConfig = {
 };
 
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenticationConfig));
-

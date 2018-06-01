@@ -108,4 +108,3 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 }));
 
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenticationConfig));
-
