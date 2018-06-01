@@ -229,12 +229,14 @@ export class BotAuthenticationMiddleware implements Middleware {
 			};
 		};
 		if (process.env.AZURE_AD_V2_CLIENT_ID && process.env.AZURE_AD_V2_CLIENT_SECRET) {
+			let azureADv2Resource: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.resource ? this.authenticationConfig.azureADv2.resource : defaultProviderOptions.azureADv2.resource;
 			let azureADv2Tenant: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
 			this.authenticationConfig = {
 				...this.authenticationConfig, azureADv2: {
 					... this.authenticationConfig.azureADv2,
 					clientId: process.env.AZURE_AD_V2_CLIENT_ID as string,
 					clientSecret: process.env.AZURE_AD_V2_CLIENT_SECRET as string,
+					resource: azureADv2Resource,
 					tenant: azureADv2Tenant
 				}
 			};
