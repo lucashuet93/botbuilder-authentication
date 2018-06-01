@@ -18,7 +18,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 	private adapter: BotFrameworkAdapter;
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
-	private callbackURL: string;
 	private magicCode: string;
 	private currentAccessToken: string;
 	private sentCode: boolean;
@@ -29,7 +28,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
 		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}` : this.server.address().address;
-		this.callbackURL = `${this.baseUrl}/auth/callback`;
 		this.initializeEnvironmentVariables();
 		this.initializePassport();
 		this.initializeRedirectEndpoints();
@@ -117,7 +115,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//---------------------------- PASSPORT INIT (Facebook, Google, and GitHub) -----------------------------//
+	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
 	initializePassport() {
 		//initialize Passport
@@ -146,11 +144,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 			}));
 			let facebookScope: string[] = this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : defaultProviderOptions.facebook.scopes;
 			this.server.get('/auth/facebook', passport.authenticate('facebook', { scope: facebookScope }));
-			this.server.get('/auth/facebook/callback',
-				passport.authenticate('facebook', {
-					successRedirect: '/auth/callback',
-					failureRedirect: '/auth/failure'
-				}));
+			this.server.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
 		//GitHub
@@ -160,18 +154,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 				clientSecret: this.authenticationConfig.github.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/github/callback`
 			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
-				//store the access token on successful login (callback runs before successRedirect)
 				this.currentAccessToken = accessToken;
 				this.selectedProvider = ProviderType.Github;
 				done(null, profile);
 			}));
 			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
 			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
-			this.server.get('/auth/github/callback',
-				passport.authenticate('github', {
-					successRedirect: '/auth/callback',
-					failureRedirect: '/auth/failure'
-				}));
+			this.server.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
 		//Google
@@ -181,18 +170,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 				clientSecret: this.authenticationConfig.google.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/google/callback`
 			}, (accessToken: string, refreshToken: string, profile: GoogleProfile, done: Function) => {
-				//store the access token on successful login (callback runs before successRedirect)
 				this.currentAccessToken = accessToken;
 				this.selectedProvider = ProviderType.Google;
 				done(null, profile);
 			}));
 			let googleScope: string[] = this.authenticationConfig.google.scopes ? this.authenticationConfig.google.scopes : defaultProviderOptions.google.scopes;
 			this.server.get('/auth/google', passport.authenticate('google', { scope: googleScope }));
-			this.server.get('/auth/google/callback',
-				passport.authenticate('google', {
-					successRedirect: '/auth/callback',
-					failureRedirect: '/auth/failure'
-				}));
+			this.server.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
 		//Active Directory
@@ -206,18 +190,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 				resource: 'https://graph.windows.net',
 				tenant: 'microsoft.onmicrosoft.com'
 			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
-				//store the access token on successful login (callback runs before successRedirect)
 				this.currentAccessToken = accessToken;
 				this.selectedProvider = ProviderType.ActiveDirectory;
 				done(null, profile);
 			}));
 			this.server.get('/auth/activeDirectory', passport.authenticate('azure_ad_oauth2'));
-			this.server.get('/auth/activeDirectory/callback',
-				passport.authenticate('azure_ad_oauth2', {
-					session: false,
-					successRedirect: '/auth/callback',
-					failureRedirect: '/auth/failure'
-				}));
+			this.server.get('/auth/activeDirectory/callback', passport.authenticate('azure_ad_oauth2', { session: false, successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 	};
 
@@ -271,37 +249,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 	//------------------------------------------ CARD --------------------------------------------------------//
 
 	createAuthorizationUris(): ProviderAuthorizationUri[] {
-		//Pass the proper authorization uris back to the user
+		//Pass the authorization uris set up in the Passport initialization back to the user
 		let authorizationUris: ProviderAuthorizationUri[] = [];
-		//authorization uris are the endpoints set up in the Passport initialization
-		if (this.authenticationConfig.facebook) {
-			let facebookAuthorizationUri: ProviderAuthorizationUri = {
-				provider: ProviderType.Facebook,
-				authorizationUri: `${this.baseUrl}/auth/facebook`
-			};
-			authorizationUris.push(facebookAuthorizationUri);
-		};
-		if (this.authenticationConfig.google) {
-			let googleAuthorizationUri: ProviderAuthorizationUri = {
-				provider: ProviderType.Google,
-				authorizationUri: `${this.baseUrl}/auth/google`
-			};
-			authorizationUris.push(googleAuthorizationUri);
-		};
-		if (this.authenticationConfig.github) {
-			let githubAuthorizationUri: ProviderAuthorizationUri = {
-				provider: ProviderType.Github,
-				authorizationUri: `${this.baseUrl}/auth/github`
-			};
-			authorizationUris.push(githubAuthorizationUri);
-		};
-		if (this.authenticationConfig.activeDirectory) {
-			let activeDirectoryAuthorizationUri: ProviderAuthorizationUri = {
-				provider: ProviderType.ActiveDirectory,
-				authorizationUri: `${this.baseUrl}/auth/activeDirectory`
-			};
-			authorizationUris.push(activeDirectoryAuthorizationUri);
-		};
+		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
+		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/auth/google` });
+		if (this.authenticationConfig.activeDirectory) authorizationUris.push({ provider: ProviderType.ActiveDirectory, authorizationUri: `${this.baseUrl}/auth/activeDirectory` });
+		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
 		return authorizationUris;
 	};
 
