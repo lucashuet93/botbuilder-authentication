@@ -56,6 +56,18 @@ const authenticationConfig = {
 	facebook: {
 		clientId: 'FACEBOOK_CLIENT_ID',
 		clientSecret: 'FACEBOOK_CLIENT_SECRET'
+	},
+	azureADv2: {
+		clientId: 'AZURE_AD_V2_CLIENT_ID',
+		clientSecret: 'AZURE_AD_V2_CLIENT_SECRET'
+	},
+	google: {
+		clientId: 'GOOGLE_CLIENT_ID',
+		clientSecret: 'GOOGLE_CLIENT_SECRET'
+	},
+	github: {
+		clientId: 'GITHUB_CLIENT_ID',
+		clientSecret: 'GITHUB_CLIENT_SECRET'
 	}
 };
 ```
