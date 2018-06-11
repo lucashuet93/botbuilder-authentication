@@ -14,14 +14,14 @@ import { defaultProviderOptions } from './constants';
 
 export class BotAuthenticationMiddleware implements Middleware {
 
-	protected server: Server;
-	protected adapter: BotFrameworkAdapter;
-	protected authenticationConfig: BotAuthenticationConfiguration;
-	protected baseUrl: string;
-	protected magicCode: string;
-	protected currentAccessToken: string;
-	protected sentCode: boolean;
-	protected selectedProvider: ProviderType;
+	private server: Server;
+	private adapter: BotFrameworkAdapter;
+	private authenticationConfig: BotAuthenticationConfiguration;
+	private baseUrl: string;
+	private magicCode: string;
+	private currentAccessToken: string;
+	private sentCode: boolean;
+	private selectedProvider: ProviderType;
 
     /**
      * Creates a new BotAuthenticationMiddleware instance.
@@ -44,11 +44,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 			if (!this.authenticationConfig.isUserAuthenticated(context)) {
 				//run auth
 				if (!this.sentCode) {
+					//send the authentication card, triggering the auth flow
 					if (this.authenticationConfig.noUserFoundMessage) {
 						await context.sendActivity(this.authenticationConfig.noUserFoundMessage);
 					};
 					await context.sendActivity(await this.createAuthenticationCard(context))
 				} else {
+					//auth flow is underway, validate that the user has input the correct code
 					await this.handleMagicCode(context);
 				};
 				return;
@@ -62,16 +64,16 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	protected async handleMagicCode(context: TurnContext): Promise<void> {
+	private async handleMagicCode(context: TurnContext): Promise<void> {
 		let submittedCode: string = context.activity.text;
 		if (submittedCode.toLowerCase() === this.magicCode.toLowerCase()) {
-			//reset necessary properties
+			//correct code, reset necessary properties and run provided onLoginSuccess
 			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken, this.selectedProvider);
 			this.magicCode = '';
 			this.sentCode = false;
 			this.currentAccessToken = '';
 		} else {
-			//reset necessary properties
+			//incorrect code, reset necessary properties
 			if (this.authenticationConfig.onLoginFailure) {
 				await this.authenticationConfig.onLoginFailure(context, this.selectedProvider);
 			} else {
@@ -86,7 +88,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
 
-	protected initializeRedirectEndpoints(): void {
+	private initializeRedirectEndpoints(): void {
 		//add plugins necessary for Passport
 		this.server.use(restify.plugins.queryParser());
 		this.server.use(restify.plugins.bodyParser());
@@ -102,7 +104,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		});
 	};
 
-	protected generateMagicCode(): string {
+	private generateMagicCode(): string {
 		//generate a magic code, store it for the next turn and set sentCode to true to prepare for the following turn
 		let magicCode: string = randomBytes(4).toString('hex');
 		this.magicCode = magicCode;
@@ -110,7 +112,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return magicCode;
 	};
 
-	protected renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
+	private renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
 		if (this.authenticationConfig.customMagicCodeRedirectEndpoint) {
 			//redirect to provided endpoint with the magic code in the body
 			let url: string = this.authenticationConfig.customMagicCodeRedirectEndpoint + `?magicCode=${magicCode}`;
@@ -123,7 +125,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
-	protected initializePassport() {
+	private initializePassport() {
 		//initialize Passport
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
@@ -209,7 +211,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//--------------------------------------- ENVIRONMENT VARIABLES ------------------------------------------//
 
-	protected initializeEnvironmentVariables() {
+	private initializeEnvironmentVariables() {
 		//pull the environment variables declared by the user for the supported providers
 		let environment: string = process.env.NODE_ENV || 'development';
 		if (environment === 'development') {
@@ -260,7 +262,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ CARD --------------------------------------------------------//
 
-	protected createAuthorizationUris(): ProviderAuthorizationUri[] {
+	private createAuthorizationUris(): ProviderAuthorizationUri[] {
 		//Pass the authorization uris set up in the Passport initialization back to the user
 		let authorizationUris: ProviderAuthorizationUri[] = [];
 		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
@@ -270,7 +272,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return authorizationUris;
 	};
 
-	protected async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
+	private async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
 		let authorizationUris: ProviderAuthorizationUri[] = this.createAuthorizationUris();
 		if (this.authenticationConfig.customAuthenticationCardGenerator) {
 			//immediately pass the authorization uris to the user for custom cards

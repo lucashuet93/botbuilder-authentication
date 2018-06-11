@@ -148,8 +148,8 @@ Provider clientIds and clientSecrets can be set via environment variables and do
 
 ```
 FACEBOOK_CLIENT_ID = {VALUE}
-FACEBOOK_CLIENT_SECRET =  {VALUE}
-AZURE_AD_V2_CLIENT_ID =  {VALUE}
+FACEBOOK_CLIENT_SECRET = {VALUE}
+AZURE_AD_V2_CLIENT_ID = {VALUE}
 AZURE_AD_V2_CLIENT_SECRET = {VALUE}
 ```
 
