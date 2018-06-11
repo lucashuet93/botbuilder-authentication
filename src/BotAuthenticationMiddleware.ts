@@ -14,15 +14,21 @@ import { defaultProviderOptions } from './constants';
 
 export class BotAuthenticationMiddleware implements Middleware {
 
-	private server: Server;
-	private adapter: BotFrameworkAdapter;
-	private authenticationConfig: BotAuthenticationConfiguration;
-	private baseUrl: string;
-	private magicCode: string;
-	private currentAccessToken: string;
-	private sentCode: boolean;
-	private selectedProvider: ProviderType;
+	protected server: Server;
+	protected adapter: BotFrameworkAdapter;
+	protected authenticationConfig: BotAuthenticationConfiguration;
+	protected baseUrl: string;
+	protected magicCode: string;
+	protected currentAccessToken: string;
+	protected sentCode: boolean;
+	protected selectedProvider: ProviderType;
 
+    /**
+     * Creates a new BotAuthenticationMiddleware instance.
+     * @param server Restify server that routes requests to the adapter.
+     * @param adapter BotFrameworkAdapter that processes incoming activities.
+     * @param authenticationConfig Configuration settings for the authentication middleware.
+    */
 	constructor(server: Server, adapter: BotFrameworkAdapter, authenticationConfig: BotAuthenticationConfiguration) {
 		this.server = server;
 		this.adapter = adapter;
@@ -56,7 +62,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	async handleMagicCode(context: TurnContext): Promise<void> {
+	protected async handleMagicCode(context: TurnContext): Promise<void> {
 		let submittedCode: string = context.activity.text;
 		if (submittedCode.toLowerCase() === this.magicCode.toLowerCase()) {
 			//reset necessary properties
@@ -80,7 +86,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
 
-	initializeRedirectEndpoints(): void {
+	protected initializeRedirectEndpoints(): void {
 		//add plugins necessary for Passport
 		this.server.use(restify.plugins.queryParser());
 		this.server.use(restify.plugins.bodyParser());
@@ -96,7 +102,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		});
 	};
 
-	generateMagicCode(): string {
+	protected generateMagicCode(): string {
 		//generate a magic code, store it for the next turn and set sentCode to true to prepare for the following turn
 		let magicCode: string = randomBytes(4).toString('hex');
 		this.magicCode = magicCode;
@@ -104,7 +110,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return magicCode;
 	};
 
-	renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
+	protected renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
 		if (this.authenticationConfig.customMagicCodeRedirectEndpoint) {
 			//redirect to provided endpoint with the magic code in the body
 			let url: string = this.authenticationConfig.customMagicCodeRedirectEndpoint + `?magicCode=${magicCode}`;
@@ -117,7 +123,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
-	initializePassport() {
+	protected initializePassport() {
 		//initialize Passport
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
@@ -203,7 +209,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//--------------------------------------- ENVIRONMENT VARIABLES ------------------------------------------//
 
-	initializeEnvironmentVariables() {
+	protected initializeEnvironmentVariables() {
 		//pull the environment variables declared by the user for the supported providers
 		let environment: string = process.env.NODE_ENV || 'development';
 		if (environment === 'development') {
@@ -254,7 +260,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ CARD --------------------------------------------------------//
 
-	createAuthorizationUris(): ProviderAuthorizationUri[] {
+	protected createAuthorizationUris(): ProviderAuthorizationUri[] {
 		//Pass the authorization uris set up in the Passport initialization back to the user
 		let authorizationUris: ProviderAuthorizationUri[] = [];
 		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
@@ -264,7 +270,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return authorizationUris;
 	};
 
-	async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
+	protected async createAuthenticationCard(context: TurnContext): Promise<Partial<Activity>> {
 		let authorizationUris: ProviderAuthorizationUri[] = this.createAuthorizationUris();
 		if (this.authenticationConfig.customAuthenticationCardGenerator) {
 			//immediately pass the authorization uris to the user for custom cards
