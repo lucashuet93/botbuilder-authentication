@@ -36,6 +36,8 @@ let simpleAuth = require('botbuilder-simple-authentication');
 
 #### Create a BotAuthenticationConfiguration
 
+The following example uses in memory storage, but any storage service can be used to store and manage authentication data. BotAuthenticationConfiguration methods can be synchronous or asynchronous.
+
 ```javascript
 let storage = new builder.MemoryStorage();
 const conversationState = new builder.ConversationState(storage);
@@ -80,7 +82,7 @@ adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenti
 
 #### Create an Application with a Supported Provider
 
-Navigate to a supported provider's developer site and create a new application. Add the appropriate endpoints to your app's approved redirect urls, then copy the clientId and clientSecret that will be used to create the BotAuthenticationConfiguration.
+Navigate to a supported provider's developer site listed below and create a new application. Add the appropriate Redirect URL to your app's approved redirect urls, then copy the clientId and clientSecret used to create the BotAuthenticationConfiguration.
 
 | Supported Providers | Redirect URL                             | Developer Site                         |
 | ------------------- | ---------------------------------------- | -------------------------------------- |
@@ -182,7 +184,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Scopes                                     |
 | ------------------------ | ------------------------------------------ |
-| AzureADv2              | User.Read                                  |
+| AzureADv2                | User.Read                                  |
 | Facebook                 | public_profile                             |
 | Google                   | https://www.googleapis.com/auth/plus.login |
 | GitHub                   | user                                       |
