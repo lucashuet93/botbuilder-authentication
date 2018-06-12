@@ -1,20 +1,24 @@
 import * as restify from 'restify';
-import * as passport from 'passport-restify';
+import * as passportRestify from 'passport-restify';
+import * as express from 'express';
+import * as passportExpress from 'passport';
+import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
 import { randomBytes } from 'crypto';
-import { Server, Request, Response, Next } from 'restify';
+import { Server } from 'restify';
+import { Router } from 'express';
 import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 import { BotAuthenticationConfiguration, ProviderConfiguration, DefaultProviderOptions, ProviderDefaults, ProviderAuthorizationUri } from './interfaces';
-import { ProviderType } from './enums';
+import { ProviderType, ServerType } from './enums';
 import { defaultProviderOptions } from './constants';
 
 export class BotAuthenticationMiddleware implements Middleware {
 
-	private server: Server;
+	private server: any;
 	private adapter: BotFrameworkAdapter;
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
@@ -22,18 +26,20 @@ export class BotAuthenticationMiddleware implements Middleware {
 	private currentAccessToken: string;
 	private sentCode: boolean;
 	private selectedProvider: ProviderType;
+	private serverType: ServerType;
 
     /**
      * Creates a new BotAuthenticationMiddleware instance.
-     * @param server Restify server that routes requests to the adapter.
+     * @param server Restify server or Express router that routes requests to the adapter.
      * @param adapter BotFrameworkAdapter that processes incoming activities.
      * @param authenticationConfig Configuration settings for the authentication middleware.
     */
-	constructor(server: Server, adapter: BotFrameworkAdapter, authenticationConfig: BotAuthenticationConfiguration) {
+	constructor(server: Server | Router, adapter: BotFrameworkAdapter, authenticationConfig: BotAuthenticationConfiguration) {
 		this.server = server;
 		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
-		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}` : this.server.address().address;
+		this.serverType = this.determineServerType(server);
+		this.baseUrl = this.generateBaseUrl();
 		this.initializeEnvironmentVariables();
 		this.initializePassport();
 		this.initializeRedirectEndpoints();
@@ -86,18 +92,41 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
+	//---------------------------------------- SERVER INITIALIZATION ------------------------------------------//
+
+	private generateBaseUrl(): string {
+		if (this.serverType === ServerType.Express) {
+			return 'http://localhost:3978';
+		} else {
+			return (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
+		}
+	}
+
+	private determineServerType(router: Server | Router): ServerType {
+		return this.isExpress(router) ? ServerType.Express : ServerType.Restify;
+	}
+
+	private isExpress(router: Server | Router): router is Server {
+		return (<Server>router).address === undefined;
+	}
+
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
 
 	private initializeRedirectEndpoints(): void {
 		//add plugins necessary for Passport
-		this.server.use(restify.plugins.queryParser());
-		this.server.use(restify.plugins.bodyParser());
+		if (this.serverType === ServerType.Express) {
+			this.server.use(bodyParser.urlencoded({ extended: true }));
+			this.server.use(bodyParser.json());
+		} else {
+			this.server.use(restify.plugins.queryParser());
+			this.server.use(restify.plugins.bodyParser());
+		}
 		//create redirect endpoint for login failure 
-		this.server.get('/auth/failure', (req: Request, res: Response, next: Next) => {
-			res.send(`Authentication Failed`);
+		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
+			this.serverType === ServerType.Express ? res.json(`Authentication Failed`) : res.send(`Authentication Failed`);
 		});
 		//passport providers ultimately redirect here
-		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
+		this.server.get('/auth/callback', (req: any, res: any, next: any) => {
 			//providers using Passport have already exchanged the authorization code for an access token
 			let magicCode: string = this.generateMagicCode();
 			this.renderMagicCode(req, res, next, magicCode);
@@ -112,20 +141,21 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return magicCode;
 	};
 
-	private renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
+	private renderMagicCode(req: any, res: any, next: any, magicCode: string): void {
 		if (this.authenticationConfig.customMagicCodeRedirectEndpoint) {
 			//redirect to provided endpoint with the magic code in the body
 			let url: string = this.authenticationConfig.customMagicCodeRedirectEndpoint + `?magicCode=${magicCode}`;
-			res.redirect(302, url, next);
+			this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
 		} else {
 			//send vanilla text to the user
-			res.send(`Please enter the code into the bot: ${magicCode}`);
+			this.serverType === ServerType.Express ? res.json(`Please enter the code into the bot: ${magicCode}`) : res.send(`Please enter the code into the bot: ${magicCode}`);
 		};
 	};
 
 	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
 	private initializePassport() {
+		let passport = this.serverType === ServerType.Express ? passportExpress : passportRestify;
 		//initialize Passport
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
@@ -160,7 +190,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 			passport.use(new GitHubStrategy({
 				clientID: this.authenticationConfig.github.clientId,
 				clientSecret: this.authenticationConfig.github.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/github/callback`
+				callbackURL: `${this.baseUrl}/auth/github/callback`,
 			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
 				this.currentAccessToken = accessToken;
 				this.selectedProvider = ProviderType.Github;

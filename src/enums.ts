@@ -8,3 +8,12 @@ export enum ProviderType {
 	Google = 'google',
 	Github = 'github'
 }
+
+/**
+ * Defines available authentication providers.
+ * @enum {string}
+ */
+export enum ServerType {
+	Express = 'express',
+	Restify = 'restify'
+}
