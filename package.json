@@ -1,13 +1,16 @@
 {
   "name": "botbuilder-simple-authentication",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Authentication middleware for the Microsoft Bot Framework v4 designed to simplify the auth process.",
   "keywords": [
     "botbuilder",
     "bots",
     "authentication",
     "auth",
-    "simple"
+    "simple",
+    "facebook",
+    "google",
+    "active directory"
   ],
   "bugs": {
     "url": "https://github.com/lucashuet93/botbuilder-simple-authentication/issues"
