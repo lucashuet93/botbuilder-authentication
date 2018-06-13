@@ -2,7 +2,6 @@ import * as restify from 'restify';
 import * as passportRestify from 'passport-restify';
 import * as express from 'express';
 import * as passportExpress from 'passport';
-import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
 import { randomBytes } from 'crypto';
@@ -111,16 +110,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 	}
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
-
+	
 	private initializeRedirectEndpoints(): void {
-		//add plugins necessary for Passport
-		if (this.serverType === ServerType.Express) {
-			this.server.use(bodyParser.urlencoded({ extended: true }));
-			this.server.use(bodyParser.json());
-		} else {
-			this.server.use(restify.plugins.queryParser());
-			this.server.use(restify.plugins.bodyParser());
-		}
 		//create redirect endpoint for login failure 
 		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
 			this.serverType === ServerType.Express ? res.json(`Authentication Failed`) : res.send(`Authentication Failed`);

@@ -1,14 +1,18 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
-import { createServer, Server, Request, Response, plugins } from 'restify';
+import { Application, Router, Request, Response } from 'express';
+import * as bodyParser from 'body-parser';
+import * as express from 'express';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../../botbuilder-simple-authentication';
 
-let server: Server = createServer();
+let app: Application = express();
+let router: Router = express.Router();
+app.use('/', router);
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 let port: any = process.env.PORT || 3978;
 
-server.use(plugins.queryParser());
-server.use(plugins.bodyParser());
-
-server.listen(port, () => {
+app.listen(port, () => {
 	console.log(`Magic happening on ${port}`);
 });
 
@@ -21,7 +25,7 @@ let storage: MemoryStorage = new MemoryStorage();
 const conversationState: ConversationState = new ConversationState(storage);
 adapter.use(conversationState);
 
-server.post('/api/messages', (req: Request, res: Response) => {
+router.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
 			const state: StoreItem = conversationState.get(context) as StoreItem;
@@ -47,7 +51,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		//the middleware passes over the access token retrieved for the user
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.authData = { accessToken, provider };
-		console.log('restify state', state);
+		console.log('express state', state);
 		await context.sendActivity(`You're logged in!`);
 	},
 	facebook: {
@@ -68,4 +72,4 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	}
 };
 
-adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
+adapter.use(new BotAuthenticationMiddleware(router, adapter, authenticationConfig));
