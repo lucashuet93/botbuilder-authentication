@@ -27,7 +27,6 @@
   "author": "Lucas Huet-Hudson",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.18.3",
     "botbuilder": "^4.0.0-preview1.2",
     "dotenv": "^5.0.1",
     "express": "^4.16.3",

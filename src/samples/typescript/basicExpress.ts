@@ -1,14 +1,11 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
-import { Application, Router, Request, Response } from 'express';
-import * as bodyParser from 'body-parser';
-import * as express from 'express';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../../botbuilder-simple-authentication';
+import { Application, Router, Request, Response } from 'express';
+import * as express from 'express';
 
 let app: Application = express();
 let router: Router = express.Router();
 app.use('/', router);
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
 let port: any = process.env.PORT || 3978;
 
@@ -28,13 +25,7 @@ adapter.use(conversationState);
 router.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
-			const state: StoreItem = conversationState.get(context) as StoreItem;
-			if (context.activity.text === 'logout') {
-				state.authData = undefined;
-				await context.sendActivity(`You're logged out!`);
-			} else {
-				await context.sendActivity(`You said ${context.activity.text}`);
-			};
+			await context.sendActivity(`You said ${context.activity.text}`);
 		};
 	});
 });
@@ -71,4 +62,6 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	}
 };
 
+//could also send in an Express Application directly
+//adapter.use(new BotAuthenticationMiddleware(app, authenticationConfig));
 adapter.use(new BotAuthenticationMiddleware(router, authenticationConfig));

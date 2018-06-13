@@ -1,9 +1,13 @@
 let builder = require('botbuilder');
-let restify = require('restify');
 let simpleAuth = require('../../botbuilder-simple-authentication');
+let restify = require('restify');
 
 let server = restify.createServer();
 let port = process.env.PORT || 3978;
+
+//Add required middleware
+server.use(restify.plugins.queryParser());
+server.use(restify.plugins.bodyParser());
 
 server.listen(port, () => {
 	console.log(`Magic happening on ${port}`);

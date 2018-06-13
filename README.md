@@ -76,6 +76,8 @@ const authenticationConfig = {
 
 #### Implement the BotAuthenticationMiddleware
 
+Create a new instance of the middleware, passing in the BotAuthenticationConfiguration along with your server (```BotAuthenticationMiddleware``` is compatible with both Restify and Express). 
+
 ```javascript
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationConfig));
 ```
@@ -216,7 +218,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Button Text                                |
 | ------------------------ | ------------------------------------------ |
-| AzureADv2              | Log in with Microsoft                      |
+| AzureADv2                | Log in with Microsoft                      |
 | Facebook                 | Log in with Facebook                       |
 | Google                   | Log in with Google+                        |
 | GitHub                   | Log in with GitHub                         |

@@ -1,10 +1,11 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
-import { createServer, Server, Request, Response, plugins } from 'restify';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../../botbuilder-simple-authentication';
+import { createServer, Server, Request, Response, plugins } from 'restify';
 
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
 
+//Add required middleware
 server.use(plugins.queryParser());
 server.use(plugins.bodyParser());
 
@@ -24,13 +25,7 @@ adapter.use(conversationState);
 server.post('/api/messages', (req: Request, res: Response) => {
 	adapter.processActivity(req, res, async (context: TurnContext) => {
 		if (context.activity.type === 'message') {
-			const state: StoreItem = conversationState.get(context) as StoreItem;
-			if (context.activity.text === 'logout') {
-				state.authData = undefined;
-				await context.sendActivity(`You're logged out!`);
-			} else {
-				await context.sendActivity(`You said ${context.activity.text}`);
-			};
+			await context.sendActivity(`You said ${context.activity.text}`);
 		};
 	});
 });
