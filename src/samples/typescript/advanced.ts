@@ -107,4 +107,4 @@ server.get('/renderCustomCode', plugins.serveStatic({
 	'file': 'index.html'
 }));
 
-adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
+adapter.use(new BotAuthenticationMiddleware(server, authenticationConfig));

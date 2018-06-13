@@ -51,7 +51,6 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		//the middleware passes over the access token retrieved for the user
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.authData = { accessToken, provider };
-		console.log('express state', state);
 		await context.sendActivity(`You're logged in!`);
 	},
 	facebook: {
@@ -72,4 +71,4 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	}
 };
 
-adapter.use(new BotAuthenticationMiddleware(router, adapter, authenticationConfig));
+adapter.use(new BotAuthenticationMiddleware(router, authenticationConfig));
