@@ -58,4 +58,4 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	}
 };
 
-adapter.use(new BotAuthenticationMiddleware(server, adapter, authenticationConfig));
+adapter.use(new BotAuthenticationMiddleware(server, authenticationConfig));

@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
 import { randomBytes } from 'crypto';
 import { Server, Request, Response, Next } from 'restify';
-import { TurnContext, Activity, MessageFactory, CardFactory, BotFrameworkAdapter, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
+import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
@@ -15,7 +15,6 @@ import { defaultProviderOptions } from './constants';
 export class BotAuthenticationMiddleware implements Middleware {
 
 	private server: Server;
-	private adapter: BotFrameworkAdapter;
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
 	private magicCode: string;
@@ -26,12 +25,10 @@ export class BotAuthenticationMiddleware implements Middleware {
     /**
      * Creates a new BotAuthenticationMiddleware instance.
      * @param server Restify server that routes requests to the adapter.
-     * @param adapter BotFrameworkAdapter that processes incoming activities.
      * @param authenticationConfig Configuration settings for the authentication middleware.
     */
-	constructor(server: Server, adapter: BotFrameworkAdapter, authenticationConfig: BotAuthenticationConfiguration) {
+	constructor(server: Server, authenticationConfig: BotAuthenticationConfiguration) {
 		this.server = server;
-		this.adapter = adapter;
 		this.authenticationConfig = authenticationConfig;
 		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}` : this.server.address().address;
 		this.initializeEnvironmentVariables();

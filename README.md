@@ -77,7 +77,7 @@ const authenticationConfig = {
 #### Implement the BotAuthenticationMiddleware
 
 ```javascript
-adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, adapter, authenticationConfig));
+adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationConfig));
 ```
 
 #### Create an Application with a Supported Provider
