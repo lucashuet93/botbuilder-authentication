@@ -4,6 +4,8 @@
 1. [Basic Usage](#basic)
 1. [Samples](#samples)
 1. [Configuration Properties](#properties)
+1. [Usage with Restify](#restify)
+1. [Usage with Express](#express)
 1. [Using Environment Variables](#env)
 1. [Custom Scopes](#scopes)
 1. [Custom Button Text](#text)
@@ -76,7 +78,7 @@ const authenticationConfig = {
 
 #### Implement the BotAuthenticationMiddleware
 
-Create a new instance of the middleware, passing in the BotAuthenticationConfiguration along with your server (```BotAuthenticationMiddleware``` is compatible with both Restify and Express). 
+Create a new instance of the middleware, passing in the BotAuthenticationConfiguration along with your server (compatible with [Restify](https://github.com/lucashuet93/botbuilder-simple-authentication#restify "Restify") or [Express](https://github.com/lucashuet93/botbuilder-simple-authentication#express "Express")). 
 
 ```javascript
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationConfig));
@@ -128,6 +130,73 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
 | tenant                          | Optional      | string                | AzureADv2                      | Organizational tenant domain.                                                        |
 | resource                        | Optional      | string                | AzureADv2                      | identifier of the WebAPI that your client wants to access on behalf of the user.     |
+
+<div id='restify'></div>
+
+## Usage With Restify
+
+#### Create a Restify Server
+
+```javascript
+let restify = require('restify');
+let server = restify.createServer();
+```
+
+#### Add Restify Plugins Middleware
+
+```javascript
+server.use(restify.plugins.queryParser());
+server.use(restify.plugins.bodyParser());
+```
+
+#### Implement the BotAuthenticationMiddleware
+
+```javascript
+adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationConfig));
+```
+
+<div id='express'></div>
+
+## Usage With Express
+
+```BotAuthenticationMiddleware``` accepts express Applications and Routers.
+
+### Express Application
+
+#### Create an Express Application
+
+```javascript
+let express = require('express');
+let app = express();
+```
+
+#### Implement the BotAuthenticationMiddleware
+
+```javascript
+adapter.use(new simpleAuth.BotAuthenticationMiddleware(app, authenticationConfig));
+```
+
+### Express Router
+
+#### Create an Express Application
+
+```javascript
+let express = require('express');
+let app = express();
+```
+
+#### Create a Router
+
+```javascript
+let router = express.Router();
+app.use('/', router);
+```
+
+#### Implement the BotAuthenticationMiddleware
+
+```javascript
+adapter.use(new simpleAuth.BotAuthenticationMiddleware(router, authenticationConfig));
+```
 
 <div id='env'></div>
 
