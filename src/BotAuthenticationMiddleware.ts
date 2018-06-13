@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
 import { randomBytes } from 'crypto';
 import { Server } from 'restify';
-import { Router } from 'express';
+import { Application, Router } from 'express';
 import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
@@ -28,10 +28,10 @@ export class BotAuthenticationMiddleware implements Middleware {
 
     /**
      * Creates a new BotAuthenticationMiddleware instance.
-     * @param server Restify server or Express router that routes requests to the adapter.
+     * @param server Restify server, Express application, or Express router that routes requests to the adapter.
      * @param authenticationConfig Configuration settings for the authentication middleware.
     */
-	constructor(server: Server | Router, authenticationConfig: BotAuthenticationConfiguration) {
+	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration) {
 		this.server = server;
 		this.authenticationConfig = authenticationConfig;
 		this.serverType = this.determineServerType(server);
@@ -98,12 +98,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 		}
 	}
 
-	private determineServerType(router: Server | Router): ServerType {
-		return this.isExpress(router) ? ServerType.Express : ServerType.Restify;
+	private determineServerType(server: Server | Application | Router): ServerType {
+		return this.isRestify(server) ? ServerType.Restify : ServerType.Express;
 	}
 
-	private isExpress(router: Server | Router): router is Server {
-		return (<Server>router).address === undefined;
+	private isRestify(server: Server | Application | Router): server is Server {
+		return (<Server>server).address !== undefined;
 	}
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
