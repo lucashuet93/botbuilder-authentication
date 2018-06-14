@@ -1,5 +1,7 @@
 # botbuilder-simple-authentication
 
+```botbuilder-simple-authentication``` exposes middleware designed to make authentication implementation quick and easy for Bot Framework Adapters.
+
 #### Table of Contents
 1. [Basic Usage](#basic)
 1. [Samples](#samples)
