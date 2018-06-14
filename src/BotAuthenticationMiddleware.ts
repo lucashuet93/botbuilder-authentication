@@ -35,9 +35,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.server = server;
 		this.authenticationConfig = authenticationConfig;
 		this.serverType = this.determineServerType(server);
-		this.baseUrl = this.generateBaseUrl();
+		this.captureBaseUrl();
 		this.initializeEnvironmentVariables();
-		this.initializePassport();
 		this.initializeRedirectEndpoints();
 	};
 
@@ -90,24 +89,27 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//---------------------------------------- SERVER INITIALIZATION ------------------------------------------//
 
-	private generateBaseUrl(): string {
-		if (this.serverType === ServerType.Express) {
-			return 'http://localhost:3978';
-		} else {
-			return (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
-		}
-	}
+	private captureBaseUrl(): void {
+		this.server.use((req: any, res: any, next: any) => {
+			if (!this.baseUrl) {
+				this.baseUrl = req.protocol + '://' + req.get('host');
+				this.initializePassport();
+			};
+			next();
+		})
+	};
 
 	private determineServerType(server: Server | Application | Router): ServerType {
 		return this.isRestify(server) ? ServerType.Restify : ServerType.Express;
 	}
 
 	private isRestify(server: Server | Application | Router): server is Server {
+		//restify servers have an address property and express applications and routers do not
 		return (<Server>server).address !== undefined;
 	}
 
 	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
-	
+
 	private initializeRedirectEndpoints(): void {
 		//create redirect endpoint for login failure 
 		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
