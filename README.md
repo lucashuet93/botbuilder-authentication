@@ -6,6 +6,7 @@
 1. [Basic Usage](#basic)
 1. [Samples](#samples)
 1. [Configuration Properties](#properties)
+1. [Usage with Express](#express)
 1. [Using Environment Variables](#env)
 1. [Custom Scopes](#scopes)
 1. [Custom Button Text](#text)
@@ -78,6 +79,8 @@ const authenticationConfig = {
 
 #### Implement the BotAuthenticationMiddleware
 
+Create a new instance of the middleware, passing in the BotAuthenticationConfiguration along with your server (compatible with Restify or Express). 
+
 ```javascript
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationConfig));
 ```
@@ -128,6 +131,49 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
 | tenant                          | Optional      | string                | AzureADv2                      | Organizational tenant domain.                                                        |
 | resource                        | Optional      | string                | AzureADv2                      | identifier of the WebAPI that your client wants to access on behalf of the user.     |
+
+<div id='express'></div>
+
+## Usage With Express
+
+**IMPORTANT** - For use with Express, the middleware must be instantiated _before_ the adapter.processActivity() statement.
+
+### Express Application
+
+#### Create an Express Application
+
+```javascript
+let express = require('express');
+let app = express();
+```
+
+#### Implement the BotAuthenticationMiddleware
+
+```javascript
+adapter.use(new simpleAuth.BotAuthenticationMiddleware(app, authenticationConfig));
+```
+
+### Express Router
+
+#### Create an Express Application
+
+```javascript
+let express = require('express');
+let app = express();
+```
+
+#### Create a Router
+
+```javascript
+let router = express.Router();
+app.use('/', router);
+```
+
+#### Implement the BotAuthenticationMiddleware
+
+```javascript
+adapter.use(new simpleAuth.BotAuthenticationMiddleware(router, authenticationConfig));
+```
 
 <div id='env'></div>
 
@@ -218,7 +264,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Button Text                                |
 | ------------------------ | ------------------------------------------ |
-| AzureADv2              | Log in with Microsoft                      |
+| AzureADv2                | Log in with Microsoft                      |
 | Facebook                 | Log in with Facebook                       |
 | Google                   | Log in with Google+                        |
 | GitHub                   | Log in with GitHub                         |

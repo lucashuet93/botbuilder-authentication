@@ -1,39 +1,47 @@
-import * as restify from 'restify';
-import * as passport from 'passport-restify';
 import * as dotenv from 'dotenv';
+import * as restify from 'restify';
+import * as express from 'express';
+import * as passportRestify from 'passport-restify';
+import * as passportExpress from 'passport';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
+import * as queryString from 'querystring';
 import { randomBytes } from 'crypto';
-import { Server, Request, Response, Next } from 'restify';
-import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
+import { Server } from 'restify';
+import { Application, Router } from 'express';
+import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderAuthorizationUri, ProviderType } from './BotAuthenticationConfiguration';
 import { defaultProviderOptions } from './DefaultProviderOptions';
+import { ServerType } from './ServerType';
 
 export class BotAuthenticationMiddleware implements Middleware {
 
-	private server: Server;
+	private server: any;
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
 	private magicCode: string;
 	private currentAccessToken: string;
 	private sentCode: boolean;
 	private selectedProvider: ProviderType;
+	private serverType: ServerType;
 
     /**
      * Creates a new BotAuthenticationMiddleware instance.
-     * @param server Restify server that routes requests to the adapter.
+     * @param server Restify server, Express application, or Express router that routes requests to the adapter.
      * @param authenticationConfig Configuration settings for the authentication middleware.
     */
-	constructor(server: Server, authenticationConfig: BotAuthenticationConfiguration) {
+	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration) {
 		this.server = server;
 		this.authenticationConfig = authenticationConfig;
-		this.baseUrl = this.server.address().address === '::' ? `http://localhost:${this.server.address().port}` : this.server.address().address;
+		this.serverType = this.determineServerType(server);
+		this.captureBaseUrl();
 		this.initializeEnvironmentVariables();
-		this.initializePassport();
 		this.initializeRedirectEndpoints();
 	};
+
+	//---------------------------------------- CONVERSATIONAL LOGIC -------------------------------------------//
 
 	async onTurn(context: TurnContext, next: Function): Promise<void> {
 		if (context.activity.type === 'message') {
@@ -82,23 +90,58 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
+	//-------------------------------------- SERVER INITIALIZATION ------------------------------------------//
+
+	private determineServerType(server: Server | Application | Router): ServerType {
+		return this.isRestify(server) ? ServerType.Restify : ServerType.Express;
+	}
+
+	private isRestify(server: Server | Application | Router): server is Server {
+		//restify servers have an address property and express applications and routers do not
+		return (<Server>server).address !== undefined;
+	}
+
+	private captureBaseUrl(): void {
+		if (this.serverType === ServerType.Restify) {
+			//restify servers can fetch the base url immediately
+			this.baseUrl = (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
+			this.initializePassport();
+		} else {
+			//express is unable to fetch the base url internally, but can inspect incoming requests to do so
+			this.server.use((req: any, res: any, next: any) => {
+				if (!this.baseUrl) {
+					this.baseUrl = req.protocol + '://' + req.get('host');
+					this.initializePassport();
+				};
+				next();
+			})
+		}
+	};
 
 	private initializeRedirectEndpoints(): void {
-		//add plugins necessary for Passport
-		this.server.use(restify.plugins.queryParser());
-		this.server.use(restify.plugins.bodyParser());
+		if (this.serverType === ServerType.Restify) {
+			this.server.use(this.customRestifyQueryParser);
+		}
 		//create redirect endpoint for login failure 
-		this.server.get('/auth/failure', (req: Request, res: Response, next: Next) => {
-			res.send(`Authentication Failed`);
+		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
+			res.json(`Authentication Failed`);
 		});
 		//passport providers ultimately redirect here
-		this.server.get('/auth/callback', (req: Request, res: Response, next: Next) => {
+		this.server.get('/auth/callback', (req: any, res: any, next: any) => {
 			//providers using Passport have already exchanged the authorization code for an access token
 			let magicCode: string = this.generateMagicCode();
 			this.renderMagicCode(req, res, next, magicCode);
 		});
 	};
+
+	private customRestifyQueryParser(req: restify.Request, res: restify.Response, next: restify.Next): void {
+		//using the restify plugins anywhere in the project breaks the express functionality, had to write a custom query parser
+		let url = req.url ? decodeURIComponent(req.url) : '';
+		let querystring = url.split('?')[1];
+		let parsed: object = queryString.parse(querystring);
+		req.query = parsed;
+		next();
+	}
 
 	private generateMagicCode(): string {
 		//generate a magic code, store it for the next turn and set sentCode to true to prepare for the following turn
@@ -108,21 +151,22 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return magicCode;
 	};
 
-	private renderMagicCode(req: Request, res: Response, next: Next, magicCode: string): void {
+	private renderMagicCode(req: any, res: any, next: any, magicCode: string): void {
 		if (this.authenticationConfig.customMagicCodeRedirectEndpoint) {
 			//redirect to provided endpoint with the magic code in the body
 			let url: string = this.authenticationConfig.customMagicCodeRedirectEndpoint + `?magicCode=${magicCode}`;
-			res.redirect(302, url, next);
+			this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
 		} else {
 			//send vanilla text to the user
-			res.send(`Please enter the code into the bot: ${magicCode}`);
+			res.json(`Please enter the code into the bot: ${magicCode}`)
 		};
 	};
 
 	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
 	private initializePassport() {
-		//initialize Passport
+		let passport = this.serverType === ServerType.Express ? passportExpress : passportRestify;
+		//initialize passport middleware
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
 		// used to serialize the user for the session
@@ -141,30 +185,11 @@ export class BotAuthenticationMiddleware implements Middleware {
 				clientSecret: this.authenticationConfig.facebook.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/facebook/callback`
 			}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
-				//store the access token on successful login (callback runs before successRedirect)
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Facebook;
-				done(null, profile);
+				this.storeAuthenticationData(accessToken, ProviderType.Facebook, profile, done);
 			}));
 			let facebookScope: string[] = this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : defaultProviderOptions.facebook.scopes;
 			this.server.get('/auth/facebook', passport.authenticate('facebook', { scope: facebookScope }));
 			this.server.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
-		};
-
-		//GitHub
-		if (this.authenticationConfig.github) {
-			passport.use(new GitHubStrategy({
-				clientID: this.authenticationConfig.github.clientId,
-				clientSecret: this.authenticationConfig.github.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/github/callback`
-			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Github;
-				done(null, profile);
-			}));
-			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
-			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
-			this.server.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
 		//Google
@@ -174,9 +199,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 				clientSecret: this.authenticationConfig.google.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/google/callback`
 			}, (accessToken: string, refreshToken: string, profile: GoogleProfile, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Google;
-				done(null, profile);
+				this.storeAuthenticationData(accessToken, ProviderType.Google, profile, done);
 			}));
 			let googleScope: string[] = this.authenticationConfig.google.scopes ? this.authenticationConfig.google.scopes : defaultProviderOptions.google.scopes;
 			this.server.get('/auth/google', passport.authenticate('google', { scope: googleScope }));
@@ -196,14 +219,33 @@ export class BotAuthenticationMiddleware implements Middleware {
 				resource: azureADv2Resource,
 				tenant: azureADv2Tenant
 			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.AzureADv2;
-				done(null, profile);
+				this.storeAuthenticationData(accessToken, ProviderType.AzureADv2, profile, done);
 			}));
 			this.server.get('/auth/azureADv2', passport.authenticate('azure_ad_oauth2'));
 			this.server.get('/auth/azureADv2/callback', passport.authenticate('azure_ad_oauth2', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
+
+		//GitHub
+		if (this.authenticationConfig.github) {
+			passport.use(new GitHubStrategy({
+				clientID: this.authenticationConfig.github.clientId,
+				clientSecret: this.authenticationConfig.github.clientSecret,
+				callbackURL: `${this.baseUrl}/auth/github/callback`,
+			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
+				this.storeAuthenticationData(accessToken, ProviderType.Github, profile, done);
+			}));
+			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
+			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
+			this.server.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+		};
 	};
+
+	private storeAuthenticationData(accessToken: string, provider: ProviderType, profile: any, done: Function): void {
+		//store the access token on successful login (callback runs before successRedirect)		
+		this.currentAccessToken = accessToken;
+		this.selectedProvider = provider;
+		return done(null, profile);
+	}
 
 	//--------------------------------------- ENVIRONMENT VARIABLES ------------------------------------------//
 
@@ -256,7 +298,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//------------------------------------------ CARD --------------------------------------------------------//
+	//------------------------------------------------ CARD ----------------------------------------------------------//
 
 	private createAuthorizationUris(): ProviderAuthorizationUri[] {
 		//Pass the authorization uris set up in the Passport initialization back to the user

@@ -10,7 +10,9 @@
     "simple",
     "facebook",
     "google",
-    "active directory"
+    "active directory",
+    "express",
+    "restify"
   ],
   "bugs": {
     "url": "https://github.com/lucashuet93/botbuilder-simple-authentication/issues"
@@ -29,16 +31,19 @@
   "dependencies": {
     "botbuilder": "^4.0.0-preview1.2",
     "dotenv": "^5.0.1",
+    "express": "^4.16.3",
     "passport": "^0.4.0",
     "passport-azure-ad-oauth2": "0.0.4",
     "passport-facebook": "^2.1.1",
     "passport-github": "^1.1.0",
     "passport-google-oauth": "^1.0.0",
     "passport-restify": "^1.0.1",
+    "query-string": "^6.1.0",
     "restify": "^7.2.0"
   },
   "devDependencies": {
     "@types/dotenv": "^4.0.3",
+    "@types/express": "^4.16.0",
     "@types/passport": "^0.4.5",
     "@types/passport-facebook": "^2.1.8",
     "@types/passport-github": "^1.1.3",

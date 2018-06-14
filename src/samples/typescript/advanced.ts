@@ -1,6 +1,6 @@
 import { BotFrameworkAdapter, MemoryStorage, ConversationState, TurnContext, StoreItem, Activity, Attachment, CardFactory, MessageFactory, CardAction } from 'botbuilder';
-import { createServer, Server, Request, Response, Next, plugins } from 'restify';
 import { BotAuthenticationConfiguration, BotAuthenticationMiddleware, ProviderType, ProviderAuthorizationUri } from '../../botbuilder-simple-authentication';
+import { createServer, Server, Request, Response, Next, plugins } from 'restify';
 import * as path from 'path';
 
 let server: Server = createServer();
