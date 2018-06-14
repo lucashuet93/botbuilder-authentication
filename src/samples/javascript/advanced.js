@@ -6,10 +6,6 @@ let path = require('path');
 let server = restify.createServer();
 let port = process.env.PORT || 3978;
 
-//Add required middleware
-server.use(restify.plugins.queryParser());
-server.use(restify.plugins.bodyParser());
-
 server.listen(port, () => {
 	console.log(`Magic happening on ${port}`);
 });

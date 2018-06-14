@@ -5,10 +5,6 @@ import { createServer, Server, Request, Response, plugins } from 'restify';
 let server: Server = createServer();
 let port: any = process.env.PORT || 3978;
 
-//Add required middleware
-server.use(plugins.queryParser());
-server.use(plugins.bodyParser());
-
 server.listen(port, () => {
 	console.log(`Magic happening on ${port}`);
 });

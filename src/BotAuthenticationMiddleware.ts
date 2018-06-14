@@ -4,6 +4,7 @@ import * as express from 'express';
 import * as passportRestify from 'passport-restify';
 import * as passportExpress from 'passport';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
+import * as queryString from 'querystring';
 import { randomBytes } from 'crypto';
 import { Server } from 'restify';
 import { Application, Router } from 'express';
@@ -118,9 +119,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 	};
 
 	private initializeRedirectEndpoints(): void {
+		if (this.serverType === ServerType.Restify) {
+			this.server.use(this.customRestifyQueryParser);
+		}
 		//create redirect endpoint for login failure 
 		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
-			this.serverType === ServerType.Express ? res.json(`Authentication Failed`) : res.send(`Authentication Failed`);
+			res.json(`Authentication Failed`);
 		});
 		//passport providers ultimately redirect here
 		this.server.get('/auth/callback', (req: any, res: any, next: any) => {
@@ -129,6 +133,15 @@ export class BotAuthenticationMiddleware implements Middleware {
 			this.renderMagicCode(req, res, next, magicCode);
 		});
 	};
+
+	private customRestifyQueryParser(req: restify.Request, res: restify.Response, next: restify.Next): void {
+		//using the restify plugins anywhere in the project breaks the express functionality, had to write a custom query parser
+		let url = req.url ? decodeURIComponent(req.url) : '';
+		let querystring = url.split('?')[1];
+		let parsed: object = queryString.parse(querystring);
+		req.query = parsed;
+		next();
+	}
 
 	private generateMagicCode(): string {
 		//generate a magic code, store it for the next turn and set sentCode to true to prepare for the following turn
@@ -145,7 +158,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 			this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
 		} else {
 			//send vanilla text to the user
-			this.serverType === ServerType.Express ? res.json(`Please enter the code into the bot: ${magicCode}`) : res.send(`Please enter the code into the bot: ${magicCode}`);
+			res.json(`Please enter the code into the bot: ${magicCode}`)
 		};
 	};
 
@@ -172,30 +185,11 @@ export class BotAuthenticationMiddleware implements Middleware {
 				clientSecret: this.authenticationConfig.facebook.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/facebook/callback`
 			}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
-				//store the access token on successful login (callback runs before successRedirect)
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Facebook;
-				done(null, profile);
+				this.storeAuthenticationData(accessToken, ProviderType.Facebook, profile, done);
 			}));
 			let facebookScope: string[] = this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : defaultProviderOptions.facebook.scopes;
 			this.server.get('/auth/facebook', passport.authenticate('facebook', { scope: facebookScope }));
 			this.server.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
-		};
-
-		//GitHub
-		if (this.authenticationConfig.github) {
-			passport.use(new GitHubStrategy({
-				clientID: this.authenticationConfig.github.clientId,
-				clientSecret: this.authenticationConfig.github.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/github/callback`,
-			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Github;
-				done(null, profile);
-			}));
-			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
-			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
-			this.server.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
 		//Google
@@ -205,9 +199,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 				clientSecret: this.authenticationConfig.google.clientSecret,
 				callbackURL: `${this.baseUrl}/auth/google/callback`
 			}, (accessToken: string, refreshToken: string, profile: GoogleProfile, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.Google;
-				done(null, profile);
+				this.storeAuthenticationData(accessToken, ProviderType.Google, profile, done);
 			}));
 			let googleScope: string[] = this.authenticationConfig.google.scopes ? this.authenticationConfig.google.scopes : defaultProviderOptions.google.scopes;
 			this.server.get('/auth/google', passport.authenticate('google', { scope: googleScope }));
@@ -227,14 +219,33 @@ export class BotAuthenticationMiddleware implements Middleware {
 				resource: azureADv2Resource,
 				tenant: azureADv2Tenant
 			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
-				this.currentAccessToken = accessToken;
-				this.selectedProvider = ProviderType.AzureADv2;
-				done(null, profile);
+				this.storeAuthenticationData(accessToken, ProviderType.AzureADv2, profile, done);
 			}));
 			this.server.get('/auth/azureADv2', passport.authenticate('azure_ad_oauth2'));
 			this.server.get('/auth/azureADv2/callback', passport.authenticate('azure_ad_oauth2', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
+
+		//GitHub
+		if (this.authenticationConfig.github) {
+			passport.use(new GitHubStrategy({
+				clientID: this.authenticationConfig.github.clientId,
+				clientSecret: this.authenticationConfig.github.clientSecret,
+				callbackURL: `${this.baseUrl}/auth/github/callback`,
+			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
+				this.storeAuthenticationData(accessToken, ProviderType.Github, profile, done);
+			}));
+			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
+			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
+			this.server.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+		};
 	};
+
+	private storeAuthenticationData(accessToken: string, provider: ProviderType, profile: any, done: Function): void {
+		//store the access token on successful login (callback runs before successRedirect)		
+		this.currentAccessToken = accessToken;
+		this.selectedProvider = provider;
+		return done(null, profile);
+	}
 
 	//--------------------------------------- ENVIRONMENT VARIABLES ------------------------------------------//
 
