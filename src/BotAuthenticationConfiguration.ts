@@ -1,8 +1,15 @@
 import { TurnContext, Activity } from 'botbuilder';
-import { Request, Response, Next } from 'restify';
-import { ProviderType } from './enums';
 
-//--------------------------------------- CONFIGURATION -----------------------------------------//
+/**
+ * Defines available authentication providers.
+ * @enum {string}
+ */
+export enum ProviderType {
+	AzureADv2 = 'azureADv2',
+	Facebook = 'facebook',
+	Google = 'google',
+	Github = 'github'
+}
 
 export interface BotAuthenticationConfiguration {
 	/**
@@ -86,47 +93,4 @@ export interface ProviderAuthorizationUri {
      * Uri that triggers authentication flow once opened.
     */
 	authorizationUri: string;
-}
-
-//--------------------------------- PROVIDER DEFAULT OPTIONS ----------------------------------//
-
-export interface DefaultProviderOptions {
-    /**
-     * Facebook default options.
-    */
-	facebook: ProviderDefaults;
-    /**
-     * Azure AD V2 default options.
-    */
-	azureADv2: AzureADv2Defaults;
-    /**
-     * Google default options.
-    */
-	google: ProviderDefaults;
-    /**
-     * GitHub default options.
-    */
-	github: ProviderDefaults;
-}
-
-export interface ProviderDefaults {
-    /**
-     * Scopes that the user will be asked to consent to as part of the authentication flow.
-    */
-	scopes: string[];
-    /**
-     * Text displayed inside the button that triggers the provider's authentication flow.
-    */
-	buttonText: string;
-}
-
-export interface AzureADv2Defaults extends ProviderDefaults {
-    /**
-     * Organizational tenant domain.
-    */
-	tenant: string;
-    /**
-     * Identifier of the WebAPI that your client wants to access on behalf of the user.
-    */
-	resource: string;
 }

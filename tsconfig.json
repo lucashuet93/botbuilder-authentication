@@ -9,7 +9,7 @@
     "noImplicitAny": true,
   },
   "exclude": [
-    "src/samples/**/*",
+    // "src/samples/**/*",
     "src/images/**/*",
     "lib",
     "node_modules"
