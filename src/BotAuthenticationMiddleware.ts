@@ -1,13 +1,13 @@
-import * as restify from 'restify';
-import * as passportRestify from 'passport-restify';
-import * as express from 'express';
-import * as passportExpress from 'passport';
 import * as dotenv from 'dotenv';
+import * as restify from 'restify';
+import * as express from 'express';
+import * as passportRestify from 'passport-restify';
+import * as passportExpress from 'passport';
 import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
 import { randomBytes } from 'crypto';
 import { Server } from 'restify';
 import { Application, Router } from 'express';
-import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware, Promiseable } from 'botbuilder';
+import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
@@ -39,6 +39,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.initializeEnvironmentVariables();
 		this.initializeRedirectEndpoints();
 	};
+
+	//---------------------------------------- CONVERSATIONAL LOGIC -------------------------------------------//
 
 	async onTurn(context: TurnContext, next: Function): Promise<void> {
 		if (context.activity.type === 'message') {
@@ -87,17 +89,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//---------------------------------------- SERVER INITIALIZATION ------------------------------------------//
-
-	private captureBaseUrl(): void {
-		this.server.use((req: any, res: any, next: any) => {
-			if (!this.baseUrl) {
-				this.baseUrl = req.protocol + '://' + req.get('host');
-				this.initializePassport();
-			};
-			next();
-		})
-	};
+	//-------------------------------------- SERVER INITIALIZATION ------------------------------------------//
 
 	private determineServerType(server: Server | Application | Router): ServerType {
 		return this.isRestify(server) ? ServerType.Restify : ServerType.Express;
@@ -108,7 +100,22 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return (<Server>server).address !== undefined;
 	}
 
-	//------------------------------------------ SERVER REDIRECTS --------------------------------------------//
+	private captureBaseUrl(): void {
+		if (this.serverType === ServerType.Restify) {
+			//restify servers can fetch the base url immediately
+			this.baseUrl = (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
+			this.initializePassport();
+		} else {
+			//express is unable to fetch the base url internally, but can inspect incoming requests to do so
+			this.server.use((req: any, res: any, next: any) => {
+				if (!this.baseUrl) {
+					this.baseUrl = req.protocol + '://' + req.get('host');
+					this.initializePassport();
+				};
+				next();
+			})
+		}
+	};
 
 	private initializeRedirectEndpoints(): void {
 		//create redirect endpoint for login failure 
@@ -146,7 +153,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	private initializePassport() {
 		let passport = this.serverType === ServerType.Express ? passportExpress : passportRestify;
-		//initialize Passport
+		//initialize passport middleware
 		this.server.use(passport.initialize());
 		this.server.use(passport.session());
 		// used to serialize the user for the session
@@ -280,7 +287,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		};
 	};
 
-	//------------------------------------------ CARD --------------------------------------------------------//
+	//------------------------------------------------ CARD ----------------------------------------------------------//
 
 	private createAuthorizationUris(): ProviderAuthorizationUri[] {
 		//Pass the authorization uris set up in the Passport initialization back to the user

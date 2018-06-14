@@ -159,7 +159,7 @@ adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationCon
 
 ## Usage With Express
 
-```BotAuthenticationMiddleware``` accepts express Applications and Routers.
+**IMPORTANT** - For use with Express, the middleware must be instantiated _before_ the adapter.processActivity() statement.
 
 ### Express Application
 

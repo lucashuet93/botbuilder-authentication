@@ -22,14 +22,6 @@ let storage = new builder.MemoryStorage();
 const conversationState = new builder.ConversationState(storage);
 adapter.use(conversationState);
 
-router.post('/api/messages', (req, res) => {
-	adapter.processActivity(req, res, async (context) => {
-		if (context.activity.type === 'message') {
-			await context.sendActivity(`You said ${context.activity.text}`);
-		};
-	});
-});
-
 //----------------------------------------- USAGE --------------------------------------------------------//
 
 const authenticationConfig = {
@@ -63,5 +55,13 @@ const authenticationConfig = {
 };
 
 //could also send in an Express Application directly
-//adapter.use(new simpleAuth.BotAuthenticationMiddleware(app, authenticationConfig));
+//adapter.use(new BotAuthenticationMiddleware(app, authenticationConfig));
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(router, authenticationConfig));
+
+router.post('/api/messages', (req, res) => {
+	adapter.processActivity(req, res, async (context) => {
+		if (context.activity.type === 'message') {
+			await context.sendActivity(`You said ${context.activity.text}`);
+		};
+	});
+});
