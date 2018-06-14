@@ -11,9 +11,9 @@ import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, Thumbna
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
-import { BotAuthenticationConfiguration, ProviderConfiguration, DefaultProviderOptions, ProviderDefaults, ProviderAuthorizationUri } from './interfaces';
-import { ProviderType, ServerType } from './enums';
-import { defaultProviderOptions } from './constants';
+import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderAuthorizationUri, ProviderType } from './BotAuthenticationConfiguration';
+import { defaultProviderOptions } from './DefaultProviderOptions';
+import { ServerType } from './ServerType';
 
 export class BotAuthenticationMiddleware implements Middleware {
 
