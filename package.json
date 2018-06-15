@@ -1,6 +1,6 @@
 {
   "name": "botbuilder-simple-authentication",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Authentication middleware for the Microsoft Bot Framework v4 designed to simplify the auth process.",
   "keywords": [
     "botbuilder",
@@ -21,14 +21,15 @@
     "type": "git",
     "url": "https://github.com/lucashuet93/botbuilder-simple-authentication.git"
   },
-  "main": "./lib/botbuilder-simple-authentication.js",
-  "typings": "./lib/botbuilder-simple-authentication.d.ts",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Lucas Huet-Hudson",
   "license": "ISC",
   "dependencies": {
+    "@types/express": "^4.16.0",
     "botbuilder": "^4.0.0-preview1.2",
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
@@ -43,7 +44,6 @@
   },
   "devDependencies": {
     "@types/dotenv": "^4.0.3",
-    "@types/express": "^4.16.0",
     "@types/passport": "^0.4.5",
     "@types/passport-facebook": "^2.1.8",
     "@types/passport-github": "^1.1.3",
