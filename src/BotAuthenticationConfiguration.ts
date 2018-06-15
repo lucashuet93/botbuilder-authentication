@@ -79,9 +79,9 @@ export interface AzureADv2Configuration extends ProviderConfiguration {
     */
 	tenant?: string;
     /**
-     * (Optional) Identifier of the WebAPI that your client wants to access on behalf of the user.
+     * (Optional) Required to set to true if you are using B2C tenant.
     */
-	resource?: string
+	b2c?: boolean
 }
 
 export interface ProviderAuthorizationUri {
