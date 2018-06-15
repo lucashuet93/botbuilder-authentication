@@ -136,8 +136,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	private customRestifyQueryParser(req: restify.Request, res: restify.Response, next: restify.Next): void {
 		//using the restify plugins anywhere in the project breaks the express functionality, had to write a custom query parser
-		let url = req.url ? decodeURIComponent(req.url) : '';
-		let querystring = url.split('?')[1];
+		let url: string = req.url ? decodeURIComponent(req.url) : '';
+		let querystring: string = url.split('?')[1];
 		let parsed: object = queryString.parse(querystring);
 		req.query = parsed;
 		next();

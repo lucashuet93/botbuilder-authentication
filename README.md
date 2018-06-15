@@ -16,7 +16,7 @@
 
 <div id='basic'></div>
 
-## Basic Usage
+# Basic Usage
 
 ```BotAuthenticationMiddleware``` assumes control of the conversation flow when a user is not authenticated and provides the user's access token after successful login. 
 
@@ -98,13 +98,13 @@ Navigate to a supported provider's developer site listed below and create a new 
 
 <div id='samples'></div>
 
-## Samples
+# Samples
 
 The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tree/master/src/samples "samples") folder contains basic examples with minimal configuration and advanced examples that implement each of the optional configuration properties, for both JavaScript and TypeScript.
 
 <div id='properties'></div>
 
-## Configuration Properties
+# Configuration Properties
 
 #### BotAuthenticationConfiguration
 
@@ -134,11 +134,11 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 
 <div id='express'></div>
 
-## Usage With Express
+# Usage With Express
 
 **IMPORTANT** - For use with Express, the middleware must be instantiated _before_ the adapter.processActivity() statement.
 
-### Express Application
+## Express Application
 
 #### Create an Express Application
 
@@ -153,7 +153,7 @@ let app = express();
 adapter.use(new simpleAuth.BotAuthenticationMiddleware(app, authenticationConfig));
 ```
 
-### Express Router
+## Express Router
 
 #### Create an Express Application
 
@@ -177,7 +177,7 @@ adapter.use(new simpleAuth.BotAuthenticationMiddleware(router, authenticationCon
 
 <div id='env'></div>
 
-## Using Environment Variables
+# Using Environment Variables
 
 Provider clientIds and clientSecrets can be set via environment variables and do not have to be set in ProviderConfiguration objects.
 
@@ -225,7 +225,7 @@ const authenticationConfig = {
 
 <div id='scopes'></div>
 
-## Custom Scopes
+# Custom Scopes
 
 Each provider declared in the ```BotAuthenticationConfiguration``` object has an optional `scope` property that accepts an array of strings. If custom scopes aren't provided, the following scopes are used by default:
 
@@ -258,7 +258,7 @@ facebook: {
 
 <div id='text'></div>
 
-## Custom Button Text
+# Custom Button Text
 
 Each provider declared in the ```BotAuthenticationConfiguration``` object has an optional `buttonText` property that accepts a string. If custom button text isn't provided, the following strings are used by default:
 
@@ -290,7 +290,7 @@ facebook: {
 
 <div id='card'></div>
 
-## Custom Authentication Card
+# Custom Authentication Card
 
 The ```customAuthenticationCardGenerator``` property is used to override the default card. The method receives the authorization uris for each provider set in the ```BotAuthenticationConfiguration``` and is responsible for navigating the user to one of them. 
 
@@ -326,7 +326,7 @@ customAuthenticationCardGenerator: async (context, authorizationUris) => {
 
 <div id='code'></div>
 
-## Custom Magic Code HTML
+# Custom Magic Code HTML
 
 The ```BotAuthenticationConfiguration``` object has an optional ```customMagicCodeRedirectEndpoint``` property used to override the default magic code HTML display and create a custom page.
 
@@ -465,7 +465,7 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 
 <div id='customazure'></div>
 
-## Custom Azure AD Tenants and Resources
+# Custom Azure AD Tenants and Resources
 
 The AzureADv2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
 
