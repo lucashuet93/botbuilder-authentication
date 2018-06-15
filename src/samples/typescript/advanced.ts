@@ -58,8 +58,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
 		clientSecret: 'uzjyQJ4491[~duaLYPHM9=~',
 		scopes: ['User.Read', 'User.ReadBasic.All'],
-		tenant: 'microsoft.onmicrosoft.com',
-		b2c: false
+		tenant: 'microsoft.onmicrosoft.com'
 	},
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',

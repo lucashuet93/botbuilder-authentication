@@ -7,8 +7,7 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 	azureADv2: {
 		scopes: ['User.Read'],
 		buttonText: 'Log in with Microsoft',
-		tenant: 'common',
-		b2c: false
+		tenant: 'common'
 	},
 	google: {
 		scopes: ['https://www.googleapis.com/auth/plus.login'],
@@ -55,8 +54,4 @@ export interface AzureADv2Defaults extends ProviderDefaults {
      * Organizational tenant domain.
     */
 	tenant: string;
-    /**
-     * Required to set to true if you are using B2C tenant.
-    */
-	b2c: boolean;
 }

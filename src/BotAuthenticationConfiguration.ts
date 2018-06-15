@@ -78,10 +78,6 @@ export interface AzureADv2Configuration extends ProviderConfiguration {
      * (Optional) Organizational tenant domain.
     */
 	tenant?: string;
-    /**
-     * (Optional) Required to set to true if you are using B2C tenant.
-    */
-	b2c?: boolean
 }
 
 export interface ProviderAuthorizationUri {

@@ -55,11 +55,10 @@ const authenticationConfig = {
 		scopes: ['public_profile', 'email', 'user_likes']
 	},
 	azureADv2: {
-		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
+		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
 		clientSecret: 'bhchfIQN348[^foKKOG54||',
 		scopes: ['User.Read', 'User.ReadBasic.All'],
-		tenant: 'microsoft.onmicrosoft.com',
-		resource: '499b84ac-1321-427f-aa17-267ca6975798'
+		tenant: 'microsoft.onmicrosoft.com'
 	},
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',

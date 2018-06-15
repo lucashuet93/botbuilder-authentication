@@ -220,7 +220,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 		//Azure AD v2
 		if (this.authenticationConfig.azureADv2) {
 			let azureADv2Scope: string[] = this.authenticationConfig.azureADv2.scopes ? this.authenticationConfig.azureADv2.scopes : defaultProviderOptions.azureADv2.scopes;
-			let azureADv2B2C: boolean = this.authenticationConfig.azureADv2.b2c ? this.authenticationConfig.azureADv2.b2c : defaultProviderOptions.azureADv2.b2c;
 			let azureADv2Tenant: string = this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
 			let isHttps: boolean = this.baseUrl.toLowerCase().includes('https');
 			let isCommonEndpoint = azureADv2Tenant === 'common';
@@ -233,7 +232,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 				responseMode: 'query',
 				redirectUrl: `${this.baseUrl}/auth/azureADv2/callback`,
 				allowHttpForRedirectUrl: !isHttps,
-				isB2C: azureADv2B2C,
 				scope: azureADv2Scope,
 				//do not validate the issuer unless a tenant is provided. Common doesn't work
 				validateIssuer: !isCommonEndpoint,
