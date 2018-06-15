@@ -56,7 +56,7 @@ const authenticationConfig = {
 	},
 	azureADv2: {
 		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
-		clientSecret: 'bhchfIQN348[^foKKOG54||',
+		clientSecret: 'uzjyQJ4491[~duaLYPHM9=~',
 		scopes: ['User.Read', 'User.ReadBasic.All'],
 		tenant: 'microsoft.onmicrosoft.com'
 	},
