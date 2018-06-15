@@ -1,6 +1,6 @@
 {
   "name": "botbuilder-simple-authentication",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Authentication middleware for the Microsoft Bot Framework v4 designed to simplify the auth process.",
   "keywords": [
     "botbuilder",
