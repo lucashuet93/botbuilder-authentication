@@ -13,13 +13,13 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 		scopes: ['https://www.googleapis.com/auth/plus.login'],
 		buttonText: 'Log in with Google+'
 	},
-	github: {
-		scopes: ['user'],
-		buttonText: 'Log in with GitHub'
-	},
 	twitter: {
 		scopes: ['Read only'],
 		buttonText: 'Log in with Twitter'
+	},
+	github: {
+		scopes: ['user'],
+		buttonText: 'Log in with GitHub'
 	}
 }
 
@@ -37,13 +37,13 @@ export interface DefaultProviderOptions {
     */
 	google: ProviderDefaults;
     /**
-     * GitHub default options.
+     * Twitter default options.
     */
-	github: ProviderDefaults;
+	twitter: ProviderDefaults;
     /**
      * GitHub default options.
     */
-	twitter: ProviderDefaults;
+	github: ProviderDefaults;
 }
 
 export interface ProviderDefaults {

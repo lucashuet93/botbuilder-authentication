@@ -131,8 +131,8 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 
 | Property                        | Constraint    | Type                  | Description                                                                          |
 | ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
-| clientId                        | Required      | string                | ClientId taken from the provider's authentication application.                       |
-| clientSecret                    | Required      | string                | ClientSecret taken from the provider's authentication application.                   |
+| clientId                        | Required      | string                | Client Id taken from the provider's authentication application.                      |
+| clientSecret                    | Required      | string                | Client Secret taken from the provider's authentication application.                  |
 | scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 
@@ -140,8 +140,8 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 
 | Property                        | Constraint    | Type                  | Description                                                                          |
 | ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
-| clientId                        | Required      | string                | ClientId taken from the provider's authentication application.                       |
-| clientSecret                    | Required      | string                | ClientSecret taken from the provider's authentication application.                   |
+| clientId                        | Required      | string                | Application Id taken from the Microsoft Application Registration Portal.             |
+| clientSecret                    | Required      | string                | Application Secret taken from the Microsoft Application Registration Portal.         |
 | scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 | tenant                          | Optional      | string                | Organizational tenant domain.                                                        |
@@ -150,8 +150,8 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 
 | Property                        | Constraint    | Type                  | Description                                                                          |
 | ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
-| consumerKey                     | Required      | string                | ConsumerKey taken from the Twitter Application Management page.                      |
-| consumerSecret                  | Required      | string                | ConsumerSecret taken from the Twitter Application Management page.                   |
+| consumerKey                     | Required      | string                | Consumer Key taken from the Twitter Application Management page.                     |
+| consumerSecret                  | Required      | string                | Consumer Secret taken from the Twitter Application Management page.                  |
 | buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 
 <div id='express'></div>
@@ -251,8 +251,7 @@ const authenticationConfig = {
 
 # Custom Scopes
 
-Each provider declared in the ```BotAuthenticationConfiguration``` object has an optional `scope` property that accepts an array of strings. If custom scopes aren't provided, the following scopes are used by default:
-
+Each provider declared in the ```BotAuthenticationConfiguration``` object except for Twitter has an optional `scope` property that accepts an array of strings (Twitter scopes are set in the Twitter Application Management page). If custom scopes aren't provided, the following scopes are used by default:
 
 | Provider                 | Scopes                                       |
 | ------------------------ | -------------------------------------------- |
@@ -260,7 +259,6 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 | Facebook                 | public_profile                               |
 | Google                   | https://www.googleapis.com/auth/plus.login   |
 | GitHub                   | user                                         |
-| Twitter                  | _Set in Twitter Application Management page_ |
 
 #### Default Scopes
 
