@@ -16,6 +16,10 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 	github: {
 		scopes: ['user'],
 		buttonText: 'Log in with GitHub'
+	},
+	twitter: {
+		scopes: ['Read only'],
+		buttonText: 'Log in with Twitter'
 	}
 }
 
@@ -36,6 +40,10 @@ export interface DefaultProviderOptions {
      * GitHub default options.
     */
 	github: ProviderDefaults;
+    /**
+     * GitHub default options.
+    */
+	twitter: ProviderDefaults;
 }
 
 export interface ProviderDefaults {

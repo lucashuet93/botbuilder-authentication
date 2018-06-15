@@ -12,6 +12,7 @@ import { Server } from 'restify';
 import { Application, Router } from 'express';
 import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
+import { Strategy as TwitterStrategy, Profile as TwitterProfile } from 'passport-twitter';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
 import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderAuthorizationUri, ProviderType } from './BotAuthenticationConfiguration';
@@ -203,6 +204,21 @@ export class BotAuthenticationMiddleware implements Middleware {
 			this.server.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
+		//Twitter
+		if (this.authenticationConfig.twitter) {
+			passport.use(new TwitterStrategy({
+				consumerKey: this.authenticationConfig.twitter.consumerKey,
+				consumerSecret: this.authenticationConfig.twitter.consumerSecret,
+				callbackURL: `${this.baseUrl}/auth/twitter/callback`,
+				passReqToCallback: true
+			}, (req: any, accessToken: any, refreshToken: any, profile: TwitterProfile, done: Function) => {
+				this.storeAuthenticationData(accessToken, ProviderType.Twitter, profile, done);
+			}));
+			//twitter scopes are set in the developer console
+			this.server.get('/auth/twitter', passport.authenticate('twitter'));
+			this.server.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+		};
+
 		//Google
 		if (this.authenticationConfig.google) {
 			passport.use(new GoogleStrategy({
@@ -297,6 +313,15 @@ export class BotAuthenticationMiddleware implements Middleware {
 				}
 			};
 		};
+		if (process.env.TWITTER_CONSUMER_KEY && process.env.TWITTER_CONSUMER_SECRET) {
+			this.authenticationConfig = {
+				...this.authenticationConfig, twitter: {
+					... this.authenticationConfig.twitter,
+					consumerKey: process.env.TWITTER_CONSUMER_KEY as string,
+					consumerSecret: process.env.TWITTER_CONSUMER_SECRET as string,
+				}
+			};
+		};
 		if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 			this.authenticationConfig = {
 				...this.authenticationConfig, google: {
@@ -337,6 +362,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/auth/google` });
 		if (this.authenticationConfig.azureADv2) authorizationUris.push({ provider: ProviderType.AzureADv2, authorizationUri: `${this.baseUrl}/auth/azureADv2` });
 		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
+		if (this.authenticationConfig.twitter) authorizationUris.push({ provider: ProviderType.Twitter, authorizationUri: `${this.baseUrl}/auth/twitter` });
 		return authorizationUris;
 	};
 
@@ -359,6 +385,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 					buttonTitle = (this.authenticationConfig.google!.buttonText ? this.authenticationConfig.google!.buttonText : defaultProviderOptions.google.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Github) {
 					buttonTitle = (this.authenticationConfig.github!.buttonText ? this.authenticationConfig.github!.buttonText : defaultProviderOptions.github.buttonText) as string;
+				} else if (providerAuthUri.provider === ProviderType.Twitter) {
+					buttonTitle = (this.authenticationConfig.twitter!.buttonText ? this.authenticationConfig.twitter!.buttonText : defaultProviderOptions.twitter.buttonText) as string;
 				}
 				cardActions.push({ type: 'openUrl', value: providerAuthUri.authorizationUri, title: buttonTitle });
 			});

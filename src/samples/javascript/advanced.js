@@ -65,6 +65,10 @@ const authenticationConfig = {
 		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb',
 		scopes: ['https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/gmail.send']
 	},
+	twitter: {
+		consumerKey: 'nJzeqg5RuQ1FFgLS7OSiDHAKa',
+		consumerSecret: 'IZY0m0BuvFag922x9MFRRcbAcAEDEsXZNXSmw87bMbuTGG3aBD'
+	},
 	github: {
 		clientId: 'f998ca5d45caba4cfac2',
 		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7',
