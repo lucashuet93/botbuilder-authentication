@@ -12,7 +12,7 @@
 1. [Custom Button Text](#text)
 1. [Custom Authentication Card](#card)
 1. [Custom Magic Code HTML](#code)
-1. [Custom Azure AD Tenants and Resources](#customazure)
+1. [Custom Azure AD Tenant](#customazure)
 
 <div id='basic'></div>
 
@@ -129,8 +129,7 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | clientSecret                    | Required      | string                | All                            | ClientSecret taken from the provider's authentication application.                   |
 | scopes                          | Optional      | string[]              | All                            | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
-| tenant                          | Optional      | string                | AzureADv2                      | Organizational tenant domain.                                                        |
-| resource                        | Optional      | string                | AzureADv2                      | identifier of the WebAPI that your client wants to access on behalf of the user.     |
+| tenant                          | Optional      | string                | AzureADv2                      | Organizational tenant domain.      |
 
 <div id='express'></div>
 
@@ -465,17 +464,16 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 
 <div id='customazure'></div>
 
-# Custom Azure AD Tenants and Resources
+# Custom Azure AD Tenant
 
-The AzureADv2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` and `resource` properties that accepts strings. If custom tenant and resource aren't provided, the following values are used by default:
+The AzureADv2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` property that accepts a string. If a custom tenant isn't provided, the common endpoint is used by default:
 
 | Property                 | Default Value                              |
 | ------------------------ | ------------------------------------------ |
 | tenant                   | common                                     |
-| resource                 | https://graph.windows.net                  |
 
 
-#### Default Tenant and Resource
+#### Default Tenant
 
 ```javascript
 azureADv2: {
@@ -484,14 +482,12 @@ azureADv2: {
 }
 ```
 
-#### Example Custom Tenant and Resource
+#### Example Custom Tenant
 
 ```javascript
 azureADv2: {
 	clientId: 'AZURE_AD_V2_CLIENT_ID',
 	clientSecret: 'AZURE_AD_V2_CLIENT_SECRET',
-	tenant: 'microsoft.onmicrosoft.com',
-	//VSTS API resource
-	resource: '499b84ac-1321-427f-aa17-267ca6975798'
+	tenant: 'microsoft.onmicrosoft.com'
 }
 ```
