@@ -78,10 +78,6 @@ export interface AzureADv2Configuration extends ProviderConfiguration {
      * (Optional) Organizational tenant domain.
     */
 	tenant?: string;
-    /**
-     * (Optional) Identifier of the WebAPI that your client wants to access on behalf of the user.
-    */
-	resource?: string
 }
 
 export interface ProviderAuthorizationUri {

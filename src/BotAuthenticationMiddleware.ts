@@ -1,10 +1,12 @@
 import * as dotenv from 'dotenv';
 import * as restify from 'restify';
 import * as express from 'express';
+import * as expressSession from 'express-session';
 import * as passportRestify from 'passport-restify';
 import * as passportExpress from 'passport';
-import * as AzureAdOAuth2Strategy from 'passport-azure-ad-oauth2';
+import * as passportAzure from 'passport-azure-ad';
 import * as queryString from 'querystring';
+import * as uuidv4 from 'uuid/v4';
 import { randomBytes } from 'crypto';
 import { Server } from 'restify';
 import { Application, Router } from 'express';
@@ -37,6 +39,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.authenticationConfig = authenticationConfig;
 		this.serverType = this.determineServerType(server);
 		this.captureBaseUrl();
+		this.initializeServerMiddleware();
 		this.initializeEnvironmentVariables();
 		this.initializeRedirectEndpoints();
 	};
@@ -118,10 +121,27 @@ export class BotAuthenticationMiddleware implements Middleware {
 		}
 	};
 
-	private initializeRedirectEndpoints(): void {
+	private initializeServerMiddleware(): void {
+		//initialize express session middleware, enables Azure AD
+		this.server.use(expressSession({ secret: uuidv4(), resave: true, saveUninitialized: false }));
 		if (this.serverType === ServerType.Restify) {
+			//restify requires query parsing
 			this.server.use(this.customRestifyQueryParser);
 		}
+	}
+
+	private customRestifyQueryParser(req: restify.Request, res: restify.Response, next: restify.Next): void {
+		//using the restify plugins anywhere in the project breaks the express functionality, had to write a custom query parser
+		let url: string = req.url ? decodeURIComponent(req.url) : '';
+		let querystring: string = url.split('?')[1];
+		let parsed: object = queryString.parse(querystring);
+		req.query = parsed;
+		next();
+	}
+
+	//--------------------------------------- SERVER REDIRECTS -------------------------------------------//
+
+	private initializeRedirectEndpoints(): void {
 		//create redirect endpoint for login failure 
 		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
 			res.json(`Authentication Failed`);
@@ -133,15 +153,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 			this.renderMagicCode(req, res, next, magicCode);
 		});
 	};
-
-	private customRestifyQueryParser(req: restify.Request, res: restify.Response, next: restify.Next): void {
-		//using the restify plugins anywhere in the project breaks the express functionality, had to write a custom query parser
-		let url: string = req.url ? decodeURIComponent(req.url) : '';
-		let querystring: string = url.split('?')[1];
-		let parsed: object = queryString.parse(querystring);
-		req.query = parsed;
-		next();
-	}
 
 	private generateMagicCode(): string {
 		//generate a magic code, store it for the next turn and set sentCode to true to prepare for the following turn
@@ -209,20 +220,41 @@ export class BotAuthenticationMiddleware implements Middleware {
 		//Azure AD v2
 		if (this.authenticationConfig.azureADv2) {
 			let azureADv2Scope: string[] = this.authenticationConfig.azureADv2.scopes ? this.authenticationConfig.azureADv2.scopes : defaultProviderOptions.azureADv2.scopes;
-			let azureADv2Resource: string = this.authenticationConfig.azureADv2.resource ? this.authenticationConfig.azureADv2.resource : defaultProviderOptions.azureADv2.resource;
-			let azureADv2Tenant: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
-			passport.use(new AzureAdOAuth2Strategy({
+			let azureADv2Tenant: string = this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
+			let isHttps: boolean = this.baseUrl.toLowerCase().includes('https');
+			let isCommonEndpoint = azureADv2Tenant === 'common';
+			passport.use(new passportAzure.OIDCStrategy({
+				identityMetadata: `https://login.microsoftonline.com/${azureADv2Tenant}/v2.0/.well-known/openid-configuration`,
 				clientID: this.authenticationConfig.azureADv2.clientId,
 				clientSecret: this.authenticationConfig.azureADv2.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/azureADv2/callback`,
+				passReqToCallback: false,
+				responseType: 'code',
+				responseMode: 'query',
+				redirectUrl: `${this.baseUrl}/auth/azureADv2/callback`,
+				allowHttpForRedirectUrl: !isHttps,
 				scope: azureADv2Scope,
-				resource: azureADv2Resource,
-				tenant: azureADv2Tenant
-			}, (accessToken: string, refresh_token: string, params: any, profile: any, done: Function) => {
+				//do not validate the issuer unless a tenant is provided. Common doesn't work
+				validateIssuer: !isCommonEndpoint,
+				issuer: azureADv2Tenant
+			}, (iss: any, sub: any, profile: any, accessToken: string, refreshToken: string, done: Function) => {
 				this.storeAuthenticationData(accessToken, ProviderType.AzureADv2, profile, done);
 			}));
-			this.server.get('/auth/azureADv2', passport.authenticate('azure_ad_oauth2'));
-			this.server.get('/auth/azureADv2/callback', passport.authenticate('azure_ad_oauth2', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get('/auth/azureADv2', passport.authenticate('azuread-openidconnect'));
+			this.server.get('/auth/azureADv2/callback', passport.authenticate('azuread-openidconnect', {
+				failureRedirect: '/auth/failure',
+				tenantIdOrName: azureADv2Tenant
+			}), (req: any, res: any, next: any) => {
+				//Azure AD auth works a bit differently, capture the response here and immediately redirect to the shared callback endpoint
+				let url = '/auth/callback';
+				this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
+			});;
+			this.server.post('/auth/azureADv2/callback', passport.authenticate('azuread-openidconnect', {
+				failureRedirect: '/auth/failure',
+				tenantIdOrName: azureADv2Tenant
+			}), (req: any, res: any, next: any) => {
+				let url = '/auth/callback';
+				this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
+			});;
 		};
 
 		//GitHub
@@ -275,14 +307,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 			};
 		};
 		if (process.env.AZURE_AD_V2_CLIENT_ID && process.env.AZURE_AD_V2_CLIENT_SECRET) {
-			let azureADv2Resource: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.resource ? this.authenticationConfig.azureADv2.resource : defaultProviderOptions.azureADv2.resource;
 			let azureADv2Tenant: string = this.authenticationConfig.azureADv2 && this.authenticationConfig.azureADv2.tenant ? this.authenticationConfig.azureADv2.tenant : defaultProviderOptions.azureADv2.tenant;
 			this.authenticationConfig = {
 				...this.authenticationConfig, azureADv2: {
 					... this.authenticationConfig.azureADv2,
 					clientId: process.env.AZURE_AD_V2_CLIENT_ID as string,
 					clientSecret: process.env.AZURE_AD_V2_CLIENT_SECRET as string,
-					resource: azureADv2Resource,
 					tenant: azureADv2Tenant
 				}
 			};

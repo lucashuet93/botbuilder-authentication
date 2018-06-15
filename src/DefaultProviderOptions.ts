@@ -7,8 +7,7 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 	azureADv2: {
 		scopes: ['User.Read'],
 		buttonText: 'Log in with Microsoft',
-		tenant: 'common',
-		resource: 'https://graph.windows.net'
+		tenant: 'common'
 	},
 	google: {
 		scopes: ['https://www.googleapis.com/auth/plus.login'],
@@ -55,8 +54,4 @@ export interface AzureADv2Defaults extends ProviderDefaults {
      * Organizational tenant domain.
     */
 	tenant: string;
-    /**
-     * Identifier of the WebAPI that your client wants to access on behalf of the user.
-    */
-	resource: string;
 }
