@@ -85,6 +85,8 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 				buttonTitle = 'Facebook';
 			} else if (auth.provider === ProviderType.Google) {
 				buttonTitle = 'Google';
+			} else if (auth.provider === ProviderType.Twitter) {
+				buttonTitle = 'Twitter';
 			} else if (auth.provider === ProviderType.Github) {
 				buttonTitle = 'GitHub';
 			}

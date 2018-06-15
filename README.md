@@ -70,6 +70,10 @@ const authenticationConfig = {
 		clientId: 'GOOGLE_CLIENT_ID',
 		clientSecret: 'GOOGLE_CLIENT_SECRET'
 	},
+	twitter: {
+		consumerKey: 'TWITTER_CONSUMER_KEY',
+		consumerSecret: 'TWITTER_CONSUMER_SECRET'
+	},
 	github: {
 		clientId: 'GITHUB_CLIENT_ID',
 		clientSecret: 'GITHUB_CLIENT_SECRET'
@@ -94,6 +98,7 @@ Navigate to a supported provider's developer site listed below and create a new 
 | Facebook            | {BASE_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
 | AzureADv2           | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
 | Google              | {BASE_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
+| Twitter             | {BASE_URL}/auth/twitter/callback         | https://apps.twitter.com               |
 | GitHub              | {BASE_URL}/auth/github/callback          | https://github.com/settings/developers |
 
 <div id='samples'></div>
@@ -116,20 +121,38 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >| Overrides the default Authentication Card. The middleware supplies the authorization uris necessary to build the card. |
 | customMagicCodeRedirectEndpoint    | Optional      | string                                                                | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
 | noUserFoundMessage                 | Optional      | string                                                                | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
-| facebook                           | Optional      | ProviderConfiguration                                                 | Configuration object that enables Facebook authentication. |
-| azureADv2                          | Optional      | ProviderConfiguration                                                 | Configuration object that enables AzureADv2 authentication. |
-| google                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables Google authentication. |
-| github                             | Optional      | ProviderConfiguration                                                 | Configuration object that enables GitHub authentication. |
+| facebook                           | Optional      | DefaultProviderConfiguration                                          | Configuration object that enables Facebook authentication. |
+| azureADv2                          | Optional      | AzureADv2Configuration                                                | Configuration object that enables AzureADv2 authentication. |
+| google                             | Optional      | DefaultProviderConfiguration                                          | Configuration object that enables Google authentication. |
+| twitter                            | Optional      | TwitterConfiguration                                                  | Configuration object that enables Twitter authentication. |
+| github                             | Optional      | DefaultProviderConfiguration                                          | Configuration object that enables GitHub authentication. |
 
-#### ProviderConfiguration
+#### DefaultProviderConfiguration
 
-| Property                        | Constraint    | Type                  | Providers                      | Description                                                                          |
-| ------------------------------- | ------------- | --------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| clientId                        | Required      | string                | All                            | ClientId taken from the provider's authentication application.                       |
-| clientSecret                    | Required      | string                | All                            | ClientSecret taken from the provider's authentication application.                   |
-| scopes                          | Optional      | string[]              | All                            | Scopes that the user will be asked to consent to as part of the authentication flow. |
-| buttonText                      | Optional      | string                | All                            | Text displayed inside the button that triggers the provider's authentication flow.   |
-| tenant                          | Optional      | string                | AzureADv2                      | Organizational tenant domain.      |
+| Property                        | Constraint    | Type                  | Description                                                                          |
+| ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| clientId                        | Required      | string                | ClientId taken from the provider's authentication application.                       |
+| clientSecret                    | Required      | string                | ClientSecret taken from the provider's authentication application.                   |
+| scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
+| buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
+
+#### AzureADv2Configuration
+
+| Property                        | Constraint    | Type                  | Description                                                                          |
+| ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| clientId                        | Required      | string                | ClientId taken from the provider's authentication application.                       |
+| clientSecret                    | Required      | string                | ClientSecret taken from the provider's authentication application.                   |
+| scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
+| buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
+| tenant                          | Optional      | string                | Organizational tenant domain.                                                        |
+
+#### TwitterConfiguration
+
+| Property                        | Constraint    | Type                  | Description                                                                          |
+| ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| consumerKey                     | Required      | string                | ConsumerKey taken from the Twitter Application Management page.                      |
+| consumerSecret                  | Required      | string                | ConsumerSecret taken from the Twitter Application Management page.                   |
+| buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 
 <div id='express'></div>
 
@@ -178,7 +201,7 @@ adapter.use(new simpleAuth.BotAuthenticationMiddleware(router, authenticationCon
 
 # Using Environment Variables
 
-Provider clientIds and clientSecrets can be set via environment variables and do not have to be set in ProviderConfiguration objects.
+Provider clientIds and clientSecrets can be set via environment variables and do not have to be set in provider configuration objects.
 
 | BotAuthenticationConfiguration Property  | Environment Variable                       |
 | ---------------------------------------- | ------------------------------------------ |
@@ -188,6 +211,8 @@ Provider clientIds and clientSecrets can be set via environment variables and do
 | azureADv2.clientSecret                   | AZURE_AD_V2_CLIENT_SECRET                  |
 | google.clientId                          | GOOGLE_CLIENT_ID                           |
 | google.clientSecret                      | GOOGLE_CLIENT_SECRET                       |
+| twitter.consumerKey                      | TWITTER_CONSUMER_KEY                       |
+| twitter.consumerSecret                   | TWITTER_CONSUMER_SECRET                    |
 | github.clientId                          | GITHUB_CLIENT_ID                           |
 | github.clientSecret                      | GITHUB_CLIENT_SECRET                       |
 
@@ -229,12 +254,13 @@ const authenticationConfig = {
 Each provider declared in the ```BotAuthenticationConfiguration``` object has an optional `scope` property that accepts an array of strings. If custom scopes aren't provided, the following scopes are used by default:
 
 
-| Provider                 | Scopes                                     |
-| ------------------------ | ------------------------------------------ |
-| AzureADv2                | User.Read                                  |
-| Facebook                 | public_profile                             |
-| Google                   | https://www.googleapis.com/auth/plus.login |
-| GitHub                   | user                                       |
+| Provider                 | Scopes                                       |
+| ------------------------ | -------------------------------------------- |
+| AzureADv2                | User.Read                                    |
+| Facebook                 | public_profile                               |
+| Google                   | https://www.googleapis.com/auth/plus.login   |
+| GitHub                   | user                                         |
+| Twitter                  | _Set in Twitter Application Management page_ |
 
 #### Default Scopes
 
@@ -266,6 +292,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 | AzureADv2                | Log in with Microsoft                      |
 | Facebook                 | Log in with Facebook                       |
 | Google                   | Log in with Google+                        |
+| Twitter                  | Log in with Twitter                        |
 | GitHub                   | Log in with GitHub                         |
 
 #### Default Button Text
@@ -306,13 +333,15 @@ customAuthenticationCardGenerator: async (context, authorizationUris) => {
 	let cardActions = [];
 	let buttonTitle;
 	authorizationUris.map((auth) => {
-		if (auth.provider === 'azureADv2') {
+		if (auth.provider === ProviderType.AzureADv2) {
 			buttonTitle = 'Microsoft';
-		} else if (auth.provider === 'facebook') {
+		} else if (auth.provider === ProviderType.Facebook) {
 			buttonTitle = 'Facebook';
-		} else if (auth.provider === 'google') {
+		} else if (auth.provider === ProviderType.Google) {
 			buttonTitle = 'Google';
-		} else if (auth.provider === 'github') {
+		} else if (auth.provider === ProviderType.Twitter) {
+			buttonTitle = 'Twitter';
+		} else if (auth.provider === ProviderType.Github) {
 			buttonTitle = 'GitHub';
 		}
 		cardActions.push({ type: 'openUrl', value: auth.authorizationUri, title: buttonTitle });

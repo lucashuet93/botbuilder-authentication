@@ -85,6 +85,8 @@ const authenticationConfig = {
 				buttonTitle = 'Facebook';
 			} else if (auth.provider === 'google') {
 				buttonTitle = 'Google';
+			} else if (auth.provider === 'twitter') {
+				buttonTitle = 'Twitter';
 			} else if (auth.provider === 'github') {
 				buttonTitle = 'GitHub';
 			}

@@ -40,7 +40,7 @@ export interface BotAuthenticationConfiguration {
     /**
      * (Optional) Configuration object that enables Facebook authentication
     */
-    facebook?: ProviderConfiguration;
+    facebook?: DefaultProviderConfiguration;
     /**
      * (Optional) Configuration object that enables Azure AD V2 authentication
     */
@@ -48,7 +48,7 @@ export interface BotAuthenticationConfiguration {
     /**
      * (Optional) Configuration object that enables Google authentication
     */
-    google?: ProviderConfiguration;
+    google?: DefaultProviderConfiguration;
     /**
      * (Optional) Configuration object that enables Twitter authentication
     */
@@ -56,10 +56,10 @@ export interface BotAuthenticationConfiguration {
     /**
      * (Optional) Configuration object that enables GitHub authentication
     */
-    github?: ProviderConfiguration;
+    github?: DefaultProviderConfiguration;
 }
 
-export interface ProviderConfiguration {
+export interface DefaultProviderConfiguration {
     /**
      * ClientId taken from the provider's authentication application.
     */
@@ -93,7 +93,7 @@ export interface TwitterConfiguration {
     buttonText?: string;
 }
 
-export interface AzureADv2Configuration extends ProviderConfiguration {
+export interface AzureADv2Configuration extends DefaultProviderConfiguration {
     /**
      * (Optional) Organizational tenant domain.
     */
