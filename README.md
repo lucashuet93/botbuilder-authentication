@@ -115,17 +115,17 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 
 | Property                           | Constraint    | Type                                                                  | Description                  |
 | ---------------------------------- | ------------- | --------------------------------------------------------------------- | -----------------------------|
-| isUserAuthenticated                | Required      | (context: TurnContext) => boolean                                     | Runs each converation turn. The middleware will prevent the bot logic from running when it returns false. | 
-| onLoginSuccess                     | Required      | (context: TurnContext, accessToken: string, provider: string) => void | Runs when the user inputs the correct magic code. The middleware passes the user's access token.  |
-| onLoginFailure                     | Optional      | (context: TurnContext, provider: string) => void                      | Runs when the user inputs an incorrect magic code. The middleware will force another login attempt by default. |
-| customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >| Overrides the default Authentication Card. The middleware supplies the authorization uris necessary to build the card. |
-| customMagicCodeRedirectEndpoint    | Optional      | string                                                                | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
-| noUserFoundMessage                 | Optional      | string                                                                | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
-| facebook                           | Optional      | DefaultProviderConfiguration                                          | Configuration object that enables Facebook authentication. |
-| azureADv2                          | Optional      | AzureADv2Configuration                                                | Configuration object that enables AzureADv2 authentication. |
-| google                             | Optional      | DefaultProviderConfiguration                                          | Configuration object that enables Google authentication. |
-| twitter                            | Optional      | TwitterConfiguration                                                  | Configuration object that enables Twitter authentication. |
-| github                             | Optional      | DefaultProviderConfiguration                                          | Configuration object that enables GitHub authentication. |
+| isUserAuthenticated                | Required      | (context: TurnContext) => boolean                                                  | Runs each converation turn. The middleware will prevent the bot logic from running when it returns false. | 
+| onLoginSuccess                     | Required      | (context: TurnContext, accessToken: string, profile: any provider: string) => void | Runs when the user inputs the correct magic code. The middleware passes the user's access token and profile.  |
+| onLoginFailure                     | Optional      | (context: TurnContext, provider: string) => void                                   | Runs when the user inputs an incorrect magic code. The middleware will force another login attempt by default. |
+| customAuthenticationCardGenerator  | Optional      | (context: TurnContext, authorizationUris: {}[]) => Partial< Activity >             | Overrides the default Authentication Card. The middleware supplies the authorization uris necessary to build the card. |
+| customMagicCodeRedirectEndpoint    | Optional      | string                                                                             | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
+| noUserFoundMessage                 | Optional      | string                                                                             | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
+| facebook                           | Optional      | DefaultProviderConfiguration                                                       | Configuration object that enables Facebook authentication. |
+| azureADv2                          | Optional      | AzureADv2Configuration                                                             | Configuration object that enables AzureADv2 authentication. |
+| google                             | Optional      | DefaultProviderConfiguration                                                       | Configuration object that enables Google authentication. |
+| twitter                            | Optional      | TwitterConfiguration                                                               | Configuration object that enables Twitter authentication. |
+| github                             | Optional      | DefaultProviderConfiguration                                                       | Configuration object that enables GitHub authentication. |
 
 #### DefaultProviderConfiguration
 
@@ -255,7 +255,7 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object except
 
 | Provider                 | Scopes                                       |
 | ------------------------ | -------------------------------------------- |
-| AzureADv2                | User.Read                                    |
+| AzureADv2                | profile                                      |
 | Facebook                 | public_profile                               |
 | Google                   | https://www.googleapis.com/auth/plus.login   |
 | GitHub                   | user                                         |

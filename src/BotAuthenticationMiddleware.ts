@@ -19,15 +19,21 @@ import { BotAuthenticationConfiguration, ProviderAuthorizationUri, ProviderType 
 import { defaultProviderOptions } from './DefaultProviderOptions';
 import { ServerType } from './ServerType';
 
+
+interface AuthData {
+	selectedProvider: ProviderType;
+	currentAccessToken: string;
+	currentProfile: any;
+}
+
 export class BotAuthenticationMiddleware implements Middleware {
 
 	private server: any;
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
 	private magicCode: string;
-	private currentAccessToken: string;
+	private authData: AuthData;
 	private sentCode: boolean;
-	private selectedProvider: ProviderType;
 	private serverType: ServerType;
 
     /**
@@ -76,21 +82,19 @@ export class BotAuthenticationMiddleware implements Middleware {
 		let submittedCode: string = context.activity.text;
 		if (submittedCode.toLowerCase() === this.magicCode.toLowerCase()) {
 			//correct code, reset necessary properties and run provided onLoginSuccess
-			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken, this.selectedProvider);
+			await this.authenticationConfig.onLoginSuccess(context, this.authData.currentAccessToken, this.authData.currentProfile, this.authData.selectedProvider);
 			this.magicCode = '';
 			this.sentCode = false;
-			this.currentAccessToken = '';
 		} else {
 			//incorrect code, reset necessary properties
 			if (this.authenticationConfig.onLoginFailure) {
-				await this.authenticationConfig.onLoginFailure(context, this.selectedProvider);
+				await this.authenticationConfig.onLoginFailure(context, this.authData.selectedProvider);
 			} else {
 				let loginFailedMessage: Partial<Activity> = MessageFactory.text('Invalid code. Please try again');
 				await context.sendActivities([loginFailedMessage, await this.createAuthenticationCard(context)]);
 			};
 			this.magicCode = '';
 			this.sentCode = false;
-			this.currentAccessToken = '';
 		};
 	};
 
@@ -289,9 +293,10 @@ export class BotAuthenticationMiddleware implements Middleware {
 	};
 
 	private storeAuthenticationData(accessToken: string, provider: ProviderType, profile: any, done: Function): void {
-		//store the access token on successful login (callback runs before successRedirect)		
-		this.currentAccessToken = accessToken;
-		this.selectedProvider = provider;
+		//store the access token on successful login (callback runs before successRedirect)	
+		this.authData.currentAccessToken = accessToken;
+		this.authData.selectedProvider = provider;
+		this.authData.currentProfile = profile;
 		return done(null, profile);
 	}
 

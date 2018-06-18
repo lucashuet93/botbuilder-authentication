@@ -40,9 +40,9 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.authData;
 	},
-	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
+	onLoginSuccess: async (context: TurnContext, accessToken: string, profile: any, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		state.authData = { accessToken, provider };
+		state.authData = { accessToken, profile, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
@@ -57,7 +57,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	azureADv2: {
 		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
 		clientSecret: 'uzjyQJ4491[~duaLYPHM9=~',
-		scopes: ['User.Read', 'User.ReadBasic.All'],
+		scopes: ['profile', 'offline_access', 'https://graph.microsoft.com/mail.read'],
 		tenant: 'microsoft.onmicrosoft.com'
 	},
 	google: {

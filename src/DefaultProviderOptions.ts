@@ -5,7 +5,7 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 		buttonText: 'Log in with Facebook'
 	},
 	azureADv2: {
-		scopes: ['User.Read'],
+		scopes: ['profile'],
 		buttonText: 'Log in with Microsoft',
 		tenant: 'common'
 	},

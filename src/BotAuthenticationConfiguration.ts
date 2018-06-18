@@ -18,9 +18,9 @@ export interface BotAuthenticationConfiguration {
     */
     isUserAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	/**
-     * Runs when the user inputs the correct magic code. The middleware passes the user's access token.
+     * Runs when the user inputs the correct magic code. The middleware passes the user's access token and profile.
     */
-    onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
+    onLoginSuccess: (context: TurnContext, accessToken: string, profile: any, provider: ProviderType) => Promise<void> | void;
 	/**
      * (Optional) Runs when the user inputs an incorrect magic code. The middleware will force another login attempt by default.
     */

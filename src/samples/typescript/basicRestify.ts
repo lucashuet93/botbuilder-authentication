@@ -34,10 +34,10 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.authData;
 	},
-	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
+	onLoginSuccess: async (context: TurnContext, accessToken: string, profile: any, provider: ProviderType): Promise<void> => {
 		//the middleware passes over the access token retrieved for the user
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		state.authData = { accessToken, provider };
+		state.authData = { accessToken, profile, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
 	facebook: {

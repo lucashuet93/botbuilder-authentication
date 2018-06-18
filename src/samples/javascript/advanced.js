@@ -40,9 +40,9 @@ const authenticationConfig = {
 		const state = conversationState.get(context);
 		return state.authData;
 	},
-	onLoginSuccess: async (context, accessToken, provider) => {
+	onLoginSuccess: async (context, accessToken, profile, provider) => {
 		const state = conversationState.get(context);
-		state.authData = { accessToken, provider };
+		state.authData = { accessToken, profile, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
 	onLoginFailure: async (context, provider) => {
@@ -57,7 +57,7 @@ const authenticationConfig = {
 	azureADv2: {
 		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
 		clientSecret: 'uzjyQJ4491[~duaLYPHM9=~',
-		scopes: ['User.Read', 'User.ReadBasic.All'],
+		scopes: ['profile', 'offline_access', 'https://graph.microsoft.com/mail.read'],
 		tenant: 'microsoft.onmicrosoft.com'
 	},
 	google: {
