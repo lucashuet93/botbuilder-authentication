@@ -12,11 +12,18 @@ import { Server } from 'restify';
 import { Application, Router } from 'express';
 import { TurnContext, Activity, MessageFactory, CardFactory, CardAction, ThumbnailCard, Attachment, Middleware } from 'botbuilder';
 import { Strategy as FacebookStrategy, Profile as FacebookProfile } from 'passport-facebook';
+import { Strategy as TwitterStrategy, Profile as TwitterProfile } from 'passport-twitter';
 import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-github';
 import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from 'passport-google-oauth';
-import { BotAuthenticationConfiguration, ProviderConfiguration, ProviderAuthorizationUri, ProviderType } from './BotAuthenticationConfiguration';
+import { BotAuthenticationConfiguration, ProviderAuthorizationUri, ProviderType } from './BotAuthenticationConfiguration';
 import { defaultProviderOptions } from './DefaultProviderOptions';
 import { ServerType } from './ServerType';
+
+interface AuthData {
+	selectedProvider: ProviderType;
+	currentAccessToken: string;
+	currentProfile: any;
+}
 
 export class BotAuthenticationMiddleware implements Middleware {
 
@@ -24,9 +31,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 	private authenticationConfig: BotAuthenticationConfiguration;
 	private baseUrl: string;
 	private magicCode: string;
-	private currentAccessToken: string;
+	private authData: AuthData;
 	private sentCode: boolean;
-	private selectedProvider: ProviderType;
 	private serverType: ServerType;
 
     /**
@@ -42,6 +48,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.initializeServerMiddleware();
 		this.initializeEnvironmentVariables();
 		this.initializeRedirectEndpoints();
+		//initialize auth data so we can set its properties later
+		this.authData = {
+			selectedProvider: ProviderType.Facebook,
+			currentAccessToken: '',
+			currentProfile: null
+		}
 	};
 
 	//---------------------------------------- CONVERSATIONAL LOGIC -------------------------------------------//
@@ -75,21 +87,19 @@ export class BotAuthenticationMiddleware implements Middleware {
 		let submittedCode: string = context.activity.text;
 		if (submittedCode.toLowerCase() === this.magicCode.toLowerCase()) {
 			//correct code, reset necessary properties and run provided onLoginSuccess
-			await this.authenticationConfig.onLoginSuccess(context, this.currentAccessToken, this.selectedProvider);
+			await this.authenticationConfig.onLoginSuccess(context, this.authData.currentAccessToken, this.authData.currentProfile, this.authData.selectedProvider);
 			this.magicCode = '';
 			this.sentCode = false;
-			this.currentAccessToken = '';
 		} else {
 			//incorrect code, reset necessary properties
 			if (this.authenticationConfig.onLoginFailure) {
-				await this.authenticationConfig.onLoginFailure(context, this.selectedProvider);
+				await this.authenticationConfig.onLoginFailure(context, this.authData.selectedProvider);
 			} else {
 				let loginFailedMessage: Partial<Activity> = MessageFactory.text('Invalid code. Please try again');
 				await context.sendActivities([loginFailedMessage, await this.createAuthenticationCard(context)]);
 			};
 			this.magicCode = '';
 			this.sentCode = false;
-			this.currentAccessToken = '';
 		};
 	};
 
@@ -203,6 +213,21 @@ export class BotAuthenticationMiddleware implements Middleware {
 			this.server.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
 		};
 
+		//Twitter
+		if (this.authenticationConfig.twitter) {
+			passport.use(new TwitterStrategy({
+				consumerKey: this.authenticationConfig.twitter.consumerKey,
+				consumerSecret: this.authenticationConfig.twitter.consumerSecret,
+				callbackURL: `${this.baseUrl}/auth/twitter/callback`,
+				passReqToCallback: true
+			}, (req: any, accessToken: any, refreshToken: any, profile: TwitterProfile, done: Function) => {
+				this.storeAuthenticationData(accessToken, ProviderType.Twitter, profile, done);
+			}));
+			//twitter scopes are set in the developer console
+			this.server.get('/auth/twitter', passport.authenticate('twitter'));
+			this.server.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+		};
+
 		//Google
 		if (this.authenticationConfig.google) {
 			passport.use(new GoogleStrategy({
@@ -273,9 +298,10 @@ export class BotAuthenticationMiddleware implements Middleware {
 	};
 
 	private storeAuthenticationData(accessToken: string, provider: ProviderType, profile: any, done: Function): void {
-		//store the access token on successful login (callback runs before successRedirect)		
-		this.currentAccessToken = accessToken;
-		this.selectedProvider = provider;
+		//store the the relevant data in authData after successful login (callback runs before successRedirect)	
+		this.authData.currentAccessToken = accessToken;
+		this.authData.selectedProvider = provider;
+		this.authData.currentProfile = profile;
 		return done(null, profile);
 	}
 
@@ -294,6 +320,15 @@ export class BotAuthenticationMiddleware implements Middleware {
 					... this.authenticationConfig.facebook,
 					clientId: process.env.FACEBOOK_CLIENT_ID as string,
 					clientSecret: process.env.FACEBOOK_CLIENT_SECRET as string,
+				}
+			};
+		};
+		if (process.env.TWITTER_CONSUMER_KEY && process.env.TWITTER_CONSUMER_SECRET) {
+			this.authenticationConfig = {
+				...this.authenticationConfig, twitter: {
+					... this.authenticationConfig.twitter,
+					consumerKey: process.env.TWITTER_CONSUMER_KEY as string,
+					consumerSecret: process.env.TWITTER_CONSUMER_SECRET as string,
 				}
 			};
 		};
@@ -336,6 +371,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
 		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/auth/google` });
 		if (this.authenticationConfig.azureADv2) authorizationUris.push({ provider: ProviderType.AzureADv2, authorizationUri: `${this.baseUrl}/auth/azureADv2` });
+		if (this.authenticationConfig.twitter) authorizationUris.push({ provider: ProviderType.Twitter, authorizationUri: `${this.baseUrl}/auth/twitter` });
 		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
 		return authorizationUris;
 	};
@@ -359,6 +395,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 					buttonTitle = (this.authenticationConfig.google!.buttonText ? this.authenticationConfig.google!.buttonText : defaultProviderOptions.google.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Github) {
 					buttonTitle = (this.authenticationConfig.github!.buttonText ? this.authenticationConfig.github!.buttonText : defaultProviderOptions.github.buttonText) as string;
+				} else if (providerAuthUri.provider === ProviderType.Twitter) {
+					buttonTitle = (this.authenticationConfig.twitter!.buttonText ? this.authenticationConfig.twitter!.buttonText : defaultProviderOptions.twitter.buttonText) as string;
 				}
 				cardActions.push({ type: 'openUrl', value: providerAuthUri.authorizationUri, title: buttonTitle });
 			});

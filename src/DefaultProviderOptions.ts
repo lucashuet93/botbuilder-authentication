@@ -5,13 +5,17 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 		buttonText: 'Log in with Facebook'
 	},
 	azureADv2: {
-		scopes: ['User.Read'],
+		scopes: ['profile'],
 		buttonText: 'Log in with Microsoft',
 		tenant: 'common'
 	},
 	google: {
 		scopes: ['https://www.googleapis.com/auth/plus.login'],
 		buttonText: 'Log in with Google+'
+	},
+	twitter: {
+		scopes: ['Read only'],
+		buttonText: 'Log in with Twitter'
 	},
 	github: {
 		scopes: ['user'],
@@ -32,6 +36,10 @@ export interface DefaultProviderOptions {
      * Google default options.
     */
 	google: ProviderDefaults;
+    /**
+     * Twitter default options.
+    */
+	twitter: ProviderDefaults;
     /**
      * GitHub default options.
     */

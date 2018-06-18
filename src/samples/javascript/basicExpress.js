@@ -30,10 +30,10 @@ const authenticationConfig = {
 		const state = conversationState.get(context);
 		return state.authData;
 	},
-	onLoginSuccess: async (context, accessToken, provider) => {
-		//the middleware passes over the access token retrieved for the user
+	onLoginSuccess: async (context, accessToken, profile, provider) => {
+		//the middleware passes over the access token and profile retrieved for the user
 		const state = conversationState.get(context);
-		state.authData = { accessToken, provider };
+		state.authData = { accessToken, profile, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
 	facebook: {
@@ -47,6 +47,10 @@ const authenticationConfig = {
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',
 		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb'
+	},
+	twitter: {
+		consumerKey: 'nJzeqg5RuQ1FFgLS7OSiDHAKa',
+		consumerSecret: 'IZY0m0BuvFag922x9MFRRcbAcAEDEsXZNXSmw87bMbuTGG3aBD'
 	},
 	github: {
 		clientId: 'f998ca5d45caba4cfac2',

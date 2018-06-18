@@ -34,10 +34,10 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		return state.authData;
 	},
-	onLoginSuccess: async (context: TurnContext, accessToken: string, provider: ProviderType): Promise<void> => {
-		//the middleware passes over the access token retrieved for the user
+	onLoginSuccess: async (context: TurnContext, accessToken: string, profile: any, provider: ProviderType): Promise<void> => {
+		//the middleware passes over the access token and profile retrieved for the user
 		const state: StoreItem = conversationState.get(context) as StoreItem;
-		state.authData = { accessToken, provider };
+		state.authData = { accessToken, profile, provider };
 		await context.sendActivity(`You're logged in!`);
 	},
 	facebook: {
@@ -51,6 +51,10 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',
 		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb'
+	},
+	twitter: {
+		consumerKey: 'nJzeqg5RuQ1FFgLS7OSiDHAKa',
+		consumerSecret: 'IZY0m0BuvFag922x9MFRRcbAcAEDEsXZNXSmw87bMbuTGG3aBD'
 	},
 	github: {
 		clientId: 'f998ca5d45caba4cfac2',

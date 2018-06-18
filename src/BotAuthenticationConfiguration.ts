@@ -5,88 +5,108 @@ import { TurnContext, Activity } from 'botbuilder';
  * @enum {string}
  */
 export enum ProviderType {
-	AzureADv2 = 'azureADv2',
-	Facebook = 'facebook',
-	Google = 'google',
-	Github = 'github'
+    AzureADv2 = 'azureADv2',
+    Facebook = 'facebook',
+    Google = 'google',
+    Twitter = 'twitter',
+    Github = 'github'
 }
 
 export interface BotAuthenticationConfiguration {
 	/**
      * Runs each converation turn. The middleware will prevent the bot logic from running when it returns false.
     */
-	isUserAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
+    isUserAuthenticated: (context: TurnContext) => Promise<boolean> | boolean;
 	/**
-     * Runs when the user inputs the correct magic code. The middleware passes the user's access token.
+     * Runs when the user inputs the correct magic code. The middleware passes the user's access token and profile.
     */
-	onLoginSuccess: (context: TurnContext, accessToken: string, provider: ProviderType) => Promise<void> | void;
+    onLoginSuccess: (context: TurnContext, accessToken: string, profile: any, provider: ProviderType) => Promise<void> | void;
 	/**
      * (Optional) Runs when the user inputs an incorrect magic code. The middleware will force another login attempt by default.
     */
-	onLoginFailure?: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
+    onLoginFailure?: (context: TurnContext, provider: ProviderType) => Promise<void> | void;
 	/**
      * (Optional) Overrides the default Authentication Card. The middleware supplies the authorization uris necessary to build the card.
     */
-	customAuthenticationCardGenerator?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
+    customAuthenticationCardGenerator?: (context: TurnContext, authorizationUris: ProviderAuthorizationUri[]) => Promise<Partial<Activity>> | Partial<Activity>;
     /**
      * (Optional) Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string.
     */
-	customMagicCodeRedirectEndpoint?: string;
+    customMagicCodeRedirectEndpoint?: string;
     /**
      * (Optional) Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. 
     */
-	noUserFoundMessage?: string;
+    noUserFoundMessage?: string;
     /**
      * (Optional) Configuration object that enables Facebook authentication
     */
-	facebook?: ProviderConfiguration;
+    facebook?: DefaultProviderConfiguration;
     /**
      * (Optional) Configuration object that enables Azure AD V2 authentication
     */
-	azureADv2?: AzureADv2Configuration;
+    azureADv2?: AzureADv2Configuration;
     /**
      * (Optional) Configuration object that enables Google authentication
     */
-	google?: ProviderConfiguration;
+    google?: DefaultProviderConfiguration;
+    /**
+     * (Optional) Configuration object that enables Twitter authentication
+    */
+    twitter?: TwitterConfiguration;
     /**
      * (Optional) Configuration object that enables GitHub authentication
     */
-	github?: ProviderConfiguration;
+    github?: DefaultProviderConfiguration;
 }
 
-export interface ProviderConfiguration {
+export interface DefaultProviderConfiguration {
     /**
      * ClientId taken from the provider's authentication application.
     */
-	clientId: string;
+    clientId: string;
     /**
      * ClientSecret taken from the provider's authentication application.
     */
-	clientSecret: string;
+    clientSecret: string;
     /**
      * (Optional) Scopes that the user will be asked to consent to as part of the authentication flow.
     */
-	scopes?: string[];
+    scopes?: string[];
     /**
      * (Optional) Text displayed inside the button that triggers the provider's authentication flow.
     */
-	buttonText?: string;
+    buttonText?: string;
 }
 
-export interface AzureADv2Configuration extends ProviderConfiguration {
+export interface TwitterConfiguration {
+    /**
+     * ConsumerKey taken from the Twitter Application Management page.
+    */
+    consumerKey: string;
+    /**
+     * ConsumerSecret taken from the Twitter Application Management page.
+    */
+    consumerSecret: string;
+    /**
+     * (Optional) Text displayed inside the button that triggers the provider's authentication flow.
+    */
+    buttonText?: string;
+}
+
+export interface AzureADv2Configuration extends DefaultProviderConfiguration {
     /**
      * (Optional) Organizational tenant domain.
     */
-	tenant?: string;
+    tenant?: string;
 }
 
 export interface ProviderAuthorizationUri {
     /**
      * Selected authentication provider
     */
-	provider: ProviderType;
+    provider: ProviderType;
     /**
      * Uri that triggers authentication flow once opened.
     */
-	authorizationUri: string;
+    authorizationUri: string;
 }
