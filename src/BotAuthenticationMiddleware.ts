@@ -19,7 +19,6 @@ import { BotAuthenticationConfiguration, ProviderAuthorizationUri, ProviderType 
 import { defaultProviderOptions } from './DefaultProviderOptions';
 import { ServerType } from './ServerType';
 
-
 interface AuthData {
 	selectedProvider: ProviderType;
 	currentAccessToken: string;
@@ -49,6 +48,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.initializeServerMiddleware();
 		this.initializeEnvironmentVariables();
 		this.initializeRedirectEndpoints();
+		//initialize auth data so we can set its properties later
 		this.authData = {
 			selectedProvider: ProviderType.Facebook,
 			currentAccessToken: '',
@@ -298,7 +298,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 	};
 
 	private storeAuthenticationData(accessToken: string, provider: ProviderType, profile: any, done: Function): void {
-		//store the access token on successful login (callback runs before successRedirect)	
+		//store the the relevant data in authData after successful login (callback runs before successRedirect)	
 		this.authData.currentAccessToken = accessToken;
 		this.authData.selectedProvider = provider;
 		this.authData.currentProfile = profile;
