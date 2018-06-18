@@ -49,6 +49,11 @@ export class BotAuthenticationMiddleware implements Middleware {
 		this.initializeServerMiddleware();
 		this.initializeEnvironmentVariables();
 		this.initializeRedirectEndpoints();
+		this.authData = {
+			selectedProvider: ProviderType.Facebook,
+			currentAccessToken: '',
+			currentProfile: null
+		}
 	};
 
 	//---------------------------------------- CONVERSATIONAL LOGIC -------------------------------------------//
@@ -366,8 +371,8 @@ export class BotAuthenticationMiddleware implements Middleware {
 		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
 		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/auth/google` });
 		if (this.authenticationConfig.azureADv2) authorizationUris.push({ provider: ProviderType.AzureADv2, authorizationUri: `${this.baseUrl}/auth/azureADv2` });
-		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
 		if (this.authenticationConfig.twitter) authorizationUris.push({ provider: ProviderType.Twitter, authorizationUri: `${this.baseUrl}/auth/twitter` });
+		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
 		return authorizationUris;
 	};
 
