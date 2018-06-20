@@ -1,6 +1,15 @@
 # botbuilder-simple-authentication
 
-```botbuilder-simple-authentication``` exposes middleware designed to make authentication implementation quick and easy for Bot Framework Adapters, offering support for Facebook, Google, Azure Active Directory V1 & V2, Twitter, and GitHub.
+```botbuilder-simple-authentication``` exposes middleware designed to make authentication implementation quick and easy for Bot Framework Adapters.
+
+| Supported Providers |
+|:--------------------:|
+| Facebook            |
+| AzureADv1           |
+| AzureADv2           |
+| Google              |
+| Twitter             |
+| GitHub              |
 
 #### Table of Contents
 1. [Basic Usage](#basic)
@@ -98,14 +107,14 @@ adapter.use(new simpleAuth.BotAuthenticationMiddleware(server, authenticationCon
 
 Navigate to a supported provider's developer site listed below and create a new application. Add the appropriate Redirect URL to your app's approved redirect urls, then copy the clientId and clientSecret used to create the BotAuthenticationConfiguration.
 
-| Supported Providers | Redirect URL                             | Developer Site                         |
-| ------------------- | ---------------------------------------- | -------------------------------------- |
-| Facebook            | {BASE_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
-| AzureADv1           | {BASE_URL}/auth/azureAD/callback         | https://apps.dev.microsoft.com         |
-| AzureADv2           | {BASE_URL}/auth/azureAD/callback         | https://apps.dev.microsoft.com         |
-| Google              | {BASE_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
-| Twitter             | {BASE_URL}/auth/twitter/callback         | https://apps.twitter.com               |
-| GitHub              | {BASE_URL}/auth/github/callback          | https://github.com/settings/developers |
+| Provider            | Redirect URL                      | Developer Site  |
+| ------------------- | --------------------------------- | --------------- |
+| Facebook            | {BASE_URL}/auth/facebook/callback | https://developers.facebook.com/apps   |
+| AzureADv1           | {BASE_URL}/auth/azureAD/callback  | https://apps.dev.microsoft.com         |
+| AzureADv2           | {BASE_URL}/auth/azureAD/callback  | https://apps.dev.microsoft.com         |
+| Google              | {BASE_URL}/auth/google/callback   | https://console.cloud.google.com/home  |
+| Twitter             | {BASE_URL}/auth/twitter/callback  | https://apps.twitter.com               |
+| GitHub              | {BASE_URL}/auth/github/callback   | https://github.com/settings/developers |
 
 <div id='samples'></div>
 
