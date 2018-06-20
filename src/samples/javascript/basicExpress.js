@@ -34,27 +34,32 @@ const authenticationConfig = {
 		//the middleware passes over the access token and profile retrieved for the user
 		const state = conversationState.get(context);
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	facebook: {
-		clientId: '174907033110091',
-		clientSecret: '482d08e1fa468e10d478ccc772452f24'
+		clientId: 'FACEBOOK_CLIENT_ID',
+		clientSecret: 'FACEBOOK_CLIENT_SECRET'
+	},
+	//the middleware will only use the Azure AD V2 credentials if both versions are provided
+	azureADv1: {
+		clientId: 'AZURE_AD_V1_CLIENT_ID',
+		clientSecret: 'AZURE_AD_V1_CLIENT_SECRET'
 	},
 	azureADv2: {
-		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
-		clientSecret: 'bhchfIQN348[^foKKOG54||'
+		clientId: 'AZURE_AD_V2_CLIENT_ID',
+		clientSecret: 'AZURE_AD_V2_CLIENT_SECRET'
 	},
 	google: {
-		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',
-		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb'
+		clientId: 'GOOGLE_CLIENT_ID',
+		clientSecret: 'GOOGLE_CLIENT_SECRET'
 	},
 	twitter: {
-		consumerKey: 'nJzeqg5RuQ1FFgLS7OSiDHAKa',
-		consumerSecret: 'IZY0m0BuvFag922x9MFRRcbAcAEDEsXZNXSmw87bMbuTGG3aBD'
+		consumerKey: 'TWITTER_CONSUMER_KEY',
+		consumerSecret: 'TWITTER_CONSUMER_SECRET'
 	},
 	github: {
-		clientId: 'f998ca5d45caba4cfac2',
-		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7'
+		clientId: 'GITHUB_CLIENT_ID',
+		clientSecret: 'GITHUB_CLIENT_SECRET'
 	}
 };
 

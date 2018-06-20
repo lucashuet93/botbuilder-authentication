@@ -43,35 +43,42 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	onLoginSuccess: async (context: TurnContext, accessToken: string, profile: any, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		await context.sendActivity('Login failed.');
-	},
+	},	
 	facebook: {
-		clientId: '174907033110091',
-		clientSecret: '482d08e1fa468e10d478ccc772452f24',
+		clientId: 'FACEBOOK_CLIENT_ID',
+		clientSecret: 'FACEBOOK_CLIENT_SECRET',
 		scopes: ['public_profile', 'email', 'user_likes']
 	},
+	azureADv1: {
+		clientId: 'AZURE_AD_V1_CLIENT_ID',
+		clientSecret: 'AZURE_AD_V1_CLIENT_SECRET',
+		scopes: ['User.Read', 'User.ReadBasic'],
+		tenant: 'microsoft.onmicrosoft.com',
+		resource: 'https://graph.windows.net'
+	},
 	azureADv2: {
-		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
-		clientSecret: 'uzjyQJ4491[~duaLYPHM9=~',
+		clientId: 'AZURE_AD_V2_CLIENT_ID',
+		clientSecret: 'AZURE_AD_V2_CLIENT_SECRET',
 		scopes: ['profile', 'offline_access', 'https://graph.microsoft.com/mail.read'],
 		tenant: 'microsoft.onmicrosoft.com'
 	},
 	google: {
-		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',
-		clientSecret: '1rhqSfoGGS3nbIv_h8lFhUAb',
+		clientId: 'GOOGLE_CLIENT_ID',
+		clientSecret: 'GOOGLE_CLIENT_SECRET',
 		scopes: ['https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/gmail.send']
 	},
 	twitter: {
-		consumerKey: 'nJzeqg5RuQ1FFgLS7OSiDHAKa',
-		consumerSecret: 'IZY0m0BuvFag922x9MFRRcbAcAEDEsXZNXSmw87bMbuTGG3aBD'
+		consumerKey: 'TWITTER_CONSUMER_KEY',
+		consumerSecret: 'TWITTER_CONSUMER_SECRET'
 	},
 	github: {
-		clientId: 'f998ca5d45caba4cfac2',
-		clientSecret: '322d492454f27e2d88c1fc5bfe5f9793d0e4c7d7',
+		clientId: 'GITHUB_CLIENT_ID',
+		clientSecret: 'GITHUB_CLIENT_SECRET',
 		scopes: ['user', 'notifications']
 	},
 	noUserFoundMessage: `Please select an authentication provider...`,
@@ -79,7 +86,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		let cardActions: CardAction[] = [];
 		let buttonTitle: string;
 		authorizationUris.map((auth: ProviderAuthorizationUri) => {
-			if (auth.provider === ProviderType.AzureADv2) {
+			if (auth.provider === ProviderType.AzureADv1 || auth.provider === ProviderType.AzureADv2) {
 				buttonTitle = 'Microsoft';
 			} else if (auth.provider === ProviderType.Facebook) {
 				buttonTitle = 'Facebook';

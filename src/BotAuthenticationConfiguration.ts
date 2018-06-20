@@ -5,8 +5,9 @@ import { TurnContext, Activity } from 'botbuilder';
  * @enum {string}
  */
 export enum ProviderType {
-    AzureADv2 = 'azureADv2',
     Facebook = 'facebook',
+    AzureADv1 = 'azureADv1',
+    AzureADv2 = 'azureADv2',
     Google = 'google',
     Twitter = 'twitter',
     Github = 'github'
@@ -42,9 +43,13 @@ export interface BotAuthenticationConfiguration {
     */
     facebook?: DefaultProviderConfiguration;
     /**
+     * (Optional) Configuration object that enables Azure AD V1 authentication
+    */
+    azureADv1?: AzureADConfiguration;
+    /**
      * (Optional) Configuration object that enables Azure AD V2 authentication
     */
-    azureADv2?: AzureADv2Configuration;
+    azureADv2?: AzureADConfiguration;
     /**
      * (Optional) Configuration object that enables Google authentication
     */
@@ -93,11 +98,16 @@ export interface TwitterConfiguration {
     buttonText?: string;
 }
 
-export interface AzureADv2Configuration extends DefaultProviderConfiguration {
+export interface AzureADConfiguration extends DefaultProviderConfiguration {
     /**
      * (Optional) Organizational tenant domain.
     */
     tenant?: string;
+    /**
+     * (Optional) Identifier of the WebAPI that your client wants to access on behalf of the user.
+    */
+    resource?: string
+
 }
 
 export interface ProviderAuthorizationUri {

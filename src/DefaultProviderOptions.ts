@@ -4,10 +4,17 @@ export const defaultProviderOptions: DefaultProviderOptions = {
 		scopes: ['public_profile'],
 		buttonText: 'Log in with Facebook'
 	},
+	azureADv1: {
+		scopes: ['User.Read'],
+		buttonText: 'Log in with Microsoft',
+		tenant: 'common',
+		resource: 'https://graph.windows.net'
+	},
 	azureADv2: {
 		scopes: ['profile'],
 		buttonText: 'Log in with Microsoft',
-		tenant: 'common'
+		tenant: 'common',
+		resource: ''
 	},
 	google: {
 		scopes: ['https://www.googleapis.com/auth/plus.login'],
@@ -31,7 +38,11 @@ export interface DefaultProviderOptions {
     /**
      * Azure AD V2 default options.
     */
-	azureADv2: AzureADv2Defaults;
+	azureADv1: AzureADDefaults;
+    /**
+     * Azure AD V2 default options.
+    */
+	azureADv2: AzureADDefaults;
     /**
      * Google default options.
     */
@@ -57,9 +68,13 @@ export interface ProviderDefaults {
 	buttonText: string;
 }
 
-export interface AzureADv2Defaults extends ProviderDefaults {
+export interface AzureADDefaults extends ProviderDefaults {
     /**
      * Organizational tenant domain.
     */
 	tenant: string;
+	/**
+     * Identifier of the WebAPI that your client wants to access on behalf of the user.
+    */
+	resource: string
 }
