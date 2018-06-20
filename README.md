@@ -12,7 +12,7 @@
 1. [Custom Button Text](#text)
 1. [Custom Authentication Card](#card)
 1. [Custom Magic Code HTML](#code)
-1. [Custom Azure AD Tenant](#customazure)
+1. [Custom Azure AD Tenant and Resource](#customazure)
 
 <div id='basic'></div>
 
@@ -56,11 +56,16 @@ const authenticationConfig = {
 		//the middleware passes over the access token and profile retrieved for the user
 		const state = conversationState.get(context);
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	facebook: {
 		clientId: 'FACEBOOK_CLIENT_ID',
 		clientSecret: 'FACEBOOK_CLIENT_SECRET'
+	},
+	//the middleware will only use the Azure AD V2 credentials if both versions are provided
+	azureADv1: {
+		clientId: 'AZURE_AD_V1_CLIENT_ID',
+		clientSecret: 'AZURE_AD_V1_CLIENT_SECRET'
 	},
 	azureADv2: {
 		clientId: 'AZURE_AD_V2_CLIENT_ID',
@@ -96,7 +101,8 @@ Navigate to a supported provider's developer site listed below and create a new 
 | Supported Providers | Redirect URL                             | Developer Site                         |
 | ------------------- | ---------------------------------------- | -------------------------------------- |
 | Facebook            | {BASE_URL}/auth/facebook/callback        | https://developers.facebook.com/apps   |
-| AzureADv2           | {BASE_URL}/auth/azureADv2/callback       | https://apps.dev.microsoft.com         |
+| AzureADv1           | {BASE_URL}/auth/azureAD/callback         | https://apps.dev.microsoft.com         |
+| AzureADv2           | {BASE_URL}/auth/azureAD/callback         | https://apps.dev.microsoft.com         |
 | Google              | {BASE_URL}/auth/google/callback          | https://console.cloud.google.com/home  |
 | Twitter             | {BASE_URL}/auth/twitter/callback         | https://apps.twitter.com               |
 | GitHub              | {BASE_URL}/auth/github/callback          | https://github.com/settings/developers |
@@ -113,8 +119,8 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 
 #### BotAuthenticationConfiguration
 
-| Property                           | Constraint    | Type                                                                  | Description                  |
-| ---------------------------------- | ------------- | --------------------------------------------------------------------- | -----------------------------|
+| Property                           | Constraint    | Type                                                                                | Description                  |
+| ---------------------------------- | ------------- | ----------------------------------------------------------------------------------- | -----------------------------|
 | isUserAuthenticated                | Required      | (context: TurnContext) => boolean                                                   | Runs each converation turn. The middleware will prevent the bot logic from running when it returns false. | 
 | onLoginSuccess                     | Required      | (context: TurnContext, accessToken: string, profile: any, provider: string) => void | Runs when the user inputs the correct magic code. The middleware passes the user's access token and profile.  |
 | onLoginFailure                     | Optional      | (context: TurnContext, provider: string) => void                                    | Runs when the user inputs an incorrect magic code. The middleware will force another login attempt by default. |
@@ -122,7 +128,8 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | customMagicCodeRedirectEndpoint    | Optional      | string                                                                              | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
 | noUserFoundMessage                 | Optional      | string                                                                              | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
 | facebook                           | Optional      | DefaultProviderConfiguration                                                        | Configuration object that enables Facebook authentication. |
-| azureADv2                          | Optional      | AzureADv2Configuration                                                              | Configuration object that enables AzureADv2 authentication. |
+| azureADv1                          | Optional      | AzureADConfiguration                                                                | Configuration object that enables AzureADv1 authentication. |
+| azureADv2                          | Optional      | AzureADConfiguration                                                                | Configuration object that enables AzureADv2 authentication. |
 | google                             | Optional      | DefaultProviderConfiguration                                                        | Configuration object that enables Google authentication. |
 | twitter                            | Optional      | TwitterConfiguration                                                                | Configuration object that enables Twitter authentication. |
 | github                             | Optional      | DefaultProviderConfiguration                                                        | Configuration object that enables GitHub authentication. |
@@ -136,7 +143,7 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 
-#### AzureADv2Configuration
+#### AzureADConfiguration
 
 | Property                        | Constraint    | Type                  | Description                                                                          |
 | ------------------------------- | ------------- | --------------------- | ------------------------------------------------------------------------------------ |
@@ -145,6 +152,7 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 | tenant                          | Optional      | string                | Organizational tenant domain.                                                        |
+| resource (V1 Only)              | Optional      | string                | Identifier of the WebAPI that your client wants to access on behalf of the user      |
 
 #### TwitterConfiguration
 
@@ -207,6 +215,8 @@ Provider clientIds and clientSecrets can be set via environment variables and do
 | ---------------------------------------- | ------------------------------------------ |
 | facebook.clientId                        | FACEBOOK_CLIENT_ID                         |
 | facebook.clientSecret                    | FACEBOOK_CLIENT_SECRET                     |
+| azureADv1.clientId                       | AZURE_AD_V1_CLIENT_ID                      |
+| azureADv1.clientSecret                   | AZURE_AD_V1_CLIENT_SECRET                  |
 | azureADv2.clientId                       | AZURE_AD_V2_CLIENT_ID                      |
 | azureADv2.clientSecret                   | AZURE_AD_V2_CLIENT_SECRET                  |
 | google.clientId                          | GOOGLE_CLIENT_ID                           |
@@ -242,7 +252,7 @@ const authenticationConfig = {
 		//the middleware passes over the access token and profile retrieved for the user
 		const state = conversationState.get(context);
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 };
 ```
@@ -255,8 +265,9 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object except
 
 | Provider                 | Scopes                                       |
 | ------------------------ | -------------------------------------------- |
-| AzureADv2                | profile                                      |
 | Facebook                 | public_profile                               |
+| AzureADv1                | User.Read                                    |
+| AzureADv2                | profile                                      |
 | Google                   | https://www.googleapis.com/auth/plus.login   |
 | GitHub                   | user                                         |
 
@@ -287,8 +298,9 @@ Each provider declared in the ```BotAuthenticationConfiguration``` object has an
 
 | Provider                 | Button Text                                |
 | ------------------------ | ------------------------------------------ |
-| AzureADv2                | Log in with Microsoft                      |
 | Facebook                 | Log in with Facebook                       |
+| AzureADv1                | Log in with Microsoft                      |
+| AzureADv2                | Log in with Microsoft                      |
 | Google                   | Log in with Google+                        |
 | Twitter                  | Log in with Twitter                        |
 | GitHub                   | Log in with GitHub                         |
@@ -331,15 +343,15 @@ customAuthenticationCardGenerator: async (context, authorizationUris) => {
 	let cardActions = [];
 	let buttonTitle;
 	authorizationUris.map((auth) => {
-		if (auth.provider === ProviderType.AzureADv2) {
+		if (auth.provider === 'azureADv1' || auth.provider === 'azureADv2') {
 			buttonTitle = 'Microsoft';
-		} else if (auth.provider === ProviderType.Facebook) {
+		} else if (auth.provider === 'facebook') {
 			buttonTitle = 'Facebook';
-		} else if (auth.provider === ProviderType.Google) {
+		} else if (auth.provider === 'google') {
 			buttonTitle = 'Google';
-		} else if (auth.provider === ProviderType.Twitter) {
+		} else if (auth.provider === 'twitter') {
 			buttonTitle = 'Twitter';
-		} else if (auth.provider === ProviderType.Github) {
+		} else if (auth.provider === 'github') {
 			buttonTitle = 'GitHub';
 		}
 		cardActions.push({ type: 'openUrl', value: auth.authorizationUri, title: buttonTitle });
@@ -385,7 +397,7 @@ const authenticationConfig = {
 		//the middleware passes over the access token and profile retrieved for the user
 		const state = conversationState.get(context);
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	facebook: {
 		clientId: 'FACEBOOK_CLIENT_ID',
@@ -491,9 +503,9 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 
 <div id='customazure'></div>
 
-# Custom Azure AD Tenant
+# Custom Azure AD Tenant and Resource
 
-The AzureADv2 provider declared in the ```BotAuthenticationConfiguration``` object has optional `tenant` property that accepts a string. If a custom tenant isn't provided, the common endpoint is used by default:
+The AzureADv1 and AzureADv2 providers declared in the ```BotAuthenticationConfiguration``` object have an optional `tenant` property that accepts a string. If a custom tenant isn't provided, the common endpoint is used by default:
 
 | Property                 | Default Value                              |
 | ------------------------ | ------------------------------------------ |
@@ -509,12 +521,38 @@ azureADv2: {
 }
 ```
 
-#### Example Custom Tenant
+#### Example Custom Tenant (V1 or V2)
 
 ```javascript
 azureADv2: {
 	clientId: 'AZURE_AD_V2_CLIENT_ID',
 	clientSecret: 'AZURE_AD_V2_CLIENT_SECRET',
 	tenant: 'microsoft.onmicrosoft.com'
+}
+```
+
+The AzureADv1 provider declared in the ```BotAuthenticationConfiguration``` object has an optional `resource` property that accepts a string. If a custom resource isn't provided, the Microsoft Graph is used by default:
+
+| Property                 | Default Value                              |
+| ------------------------ | ------------------------------------------ |
+| resource                 | https://graph.windows.net                  |
+
+#### Default Resource
+
+```javascript
+azureADv1: {
+	clientId: 'AZURE_AD_V1_CLIENT_ID',
+	clientSecret: 'AZURE_AD_V1_CLIENT_SECRET'
+}
+```
+
+#### Example Custom Resource (V1 Only)
+
+```javascript
+azureADv1: {
+	clientId: 'AZURE_AD_V1_CLIENT_ID',
+	clientSecret: 'AZURE_AD_V1_CLIENT_SECRET',
+	//VSTS API resource
+	resource: '499b84ac-1321-427f-aa17-267ca6975798'
 }
 ```
