@@ -5,9 +5,9 @@ import { TurnContext, Activity } from 'botbuilder';
  * @enum {string}
  */
 export enum ProviderType {
+    Facebook = 'facebook',
     AzureADv1 = 'azureADv1',
     AzureADv2 = 'azureADv2',
-    Facebook = 'facebook',
     Google = 'google',
     Twitter = 'twitter',
     Github = 'github'

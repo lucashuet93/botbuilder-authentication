@@ -34,15 +34,20 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		//the middleware passes over the access token and profile retrieved for the user
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	facebook: {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24'
 	},
+	//the middleware will only use the Azure AD V2 credentials if both versions are provided
+	azureADv1: {
+		clientId: 'bac92c74-e2b3-4dff-b581-117ce4123f72',
+		clientSecret: 'VBqnvid29m5yZJQluprwgzWUcOB5eCGIGYElTzfTwDA=',
+	},
 	azureADv2: {
-		clientId: '934ab9ef-ad3e-4661-a265-910f78cfd57b',
-		clientSecret: 'bhchfIQN348[^foKKOG54||'
+		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
+		clientSecret: 'uzjyQJ4491[~duaLYPHM9=~',
 	},
 	google: {
 		clientId: '785481848945-dfmivt5k5qgkvnk2ar2par8vednh8hrr.apps.googleusercontent.com',

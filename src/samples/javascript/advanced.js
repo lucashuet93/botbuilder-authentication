@@ -43,7 +43,7 @@ const authenticationConfig = {
 	onLoginSuccess: async (context, accessToken, profile, provider) => {
 		const state = conversationState.get(context);
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	onLoginFailure: async (context, provider) => {
 		const state = conversationState.get(context);
@@ -53,6 +53,13 @@ const authenticationConfig = {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24',
 		scopes: ['public_profile', 'email', 'user_likes']
+	},
+	azureADv1: {
+		clientId: 'bac92c74-e2b3-4dff-b581-117ce4123f72',
+		clientSecret: 'VBqnvid29m5yZJQluprwgzWUcOB5eCGIGYElTzfTwDA=',
+		scopes: ['User.Read', 'User.ReadBasic'],
+		tenant: 'microsoft.onmicrosoft.com',
+		resource: 'https://graph.windows.net'
 	},
 	azureADv2: {
 		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
@@ -79,7 +86,7 @@ const authenticationConfig = {
 		let cardActions = [];
 		let buttonTitle;
 		authorizationUris.map((auth) => {
-			if (auth.provider === 'azureADv2') {
+			if (auth.provider === 'azureADv1' || auth.provider === 'azureADv2') {
 				buttonTitle = 'Microsoft';
 			} else if (auth.provider === 'facebook') {
 				buttonTitle = 'Facebook';

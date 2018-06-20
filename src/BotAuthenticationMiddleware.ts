@@ -43,11 +43,11 @@ export class BotAuthenticationMiddleware implements Middleware {
 	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration) {
 		this.server = server;
 		this.authenticationConfig = authenticationConfig;
-		this.initializeEnvironmentVariables();
 		this.serverType = this.determineServerType(server);
-		this.captureBaseUrl();
 		this.initializeServerMiddleware();
 		this.initializeRedirectEndpoints();
+		this.initializeEnvironmentVariables();
+		this.initializePassport();
 		//initialize auth data so we can set its properties later
 		this.authData = {
 			selectedProvider: ProviderType.Facebook,
@@ -114,23 +114,6 @@ export class BotAuthenticationMiddleware implements Middleware {
 		return (<Server>server).address !== undefined;
 	}
 
-	private captureBaseUrl(): void {
-		if (this.serverType === ServerType.Restify) {
-			//restify servers can fetch the base url immediately
-			this.baseUrl = (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
-			this.initializePassport();
-		} else {
-			//express is unable to fetch the base url internally, but can inspect incoming requests to do so
-			this.server.use((req: any, res: any, next: any) => {
-				if (!this.baseUrl) {
-					this.baseUrl = req.protocol + '://' + req.get('host');
-					this.initializePassport();
-				};
-				next();
-			})
-		}
-	};
-
 	private initializeServerMiddleware(): void {
 		//initialize express session middleware, enables Azure AD
 		this.server.use(expressSession({ secret: uuidv4(), resave: true, saveUninitialized: false }));
@@ -185,7 +168,24 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
-	private initializePassport() {
+	private initializePassport(): void {
+		if (this.serverType === ServerType.Restify) {
+			//restify servers can fetch the base url immediately
+			this.baseUrl = (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
+			this.initializePassportProviders();
+		} else {
+			//express is unable to fetch the base url internally, but can inspect incoming requests to do so
+			this.server.use((req: any, res: any, next: any) => {
+				if (!this.baseUrl) {
+					this.baseUrl = req.protocol + '://' + req.get('host');
+					this.initializePassportProviders();
+				};
+				next();
+			})
+		}
+	};
+
+	private initializePassportProviders() {
 		let passport = this.serverType === ServerType.Express ? passportExpress : passportRestify;
 		//initialize passport middleware
 		this.server.use(passport.initialize());
@@ -244,6 +244,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 		//Azure AD v2
 		if (this.authenticationConfig.azureADv1 || this.authenticationConfig.azureADv2) {
+			//Maximally save one Azure AD provider. If both are provided, use the Azure AD V2 credentials
 			let azureAD: AzureADConfiguration = this.authenticationConfig.azureADv2 ? this.authenticationConfig.azureADv2 : this.authenticationConfig.azureADv1 as AzureADConfiguration;
 			let defaultAzureAD: AzureADDefaults = this.authenticationConfig.azureADv2 ? defaultProviderOptions.azureADv2 : defaultProviderOptions.azureADv1;
 			let azureADScope: string[] = azureAD.scopes ? azureAD.scopes : defaultAzureAD.scopes;
@@ -252,6 +253,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 			let isV2: boolean = this.authenticationConfig.azureADv2 ? true : false;
 			let isHttps: boolean = this.baseUrl.toLowerCase().includes('https');
 			let isCommonEndpoint: boolean = azureADTenant === 'common';
+			//Resources are placed in the resourceURL property for V1 apps. V2 apps combine resources with scopes.
 			let options: object = isV2 ?
 				{
 					failureRedirect: '/auth/failure',
@@ -261,6 +263,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 					tenantIdOrName: azureADTenant,
 					resourceURL: azureADResource
 				}
+			//specify v2.0 in identity metadata for V2 apps
 			let metadata: string = isV2 ? `https://login.microsoftonline.com/${azureADTenant}/v2.0/.well-known/openid-configuration` : `https://login.microsoftonline.com/${azureADTenant}/.well-known/openid-configuration`;
 			passport.use(new passportAzure.OIDCStrategy({
 				identityMetadata: metadata,
@@ -395,6 +398,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 		if (this.authenticationConfig.twitter) authorizationUris.push({ provider: ProviderType.Twitter, authorizationUri: `${this.baseUrl}/auth/twitter` });
 		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
 		if (this.authenticationConfig.azureADv1 || this.authenticationConfig.azureADv2) {
+			//Maximally send one Azure AD provider. If both are provided, send Azure AD V2
 			let azureADProvider: ProviderType = this.authenticationConfig.azureADv2 ? ProviderType.AzureADv2 : ProviderType.AzureADv1;
 			authorizationUris.push({ provider: azureADProvider, authorizationUri: `${this.baseUrl}/auth/azureAD` });
 		}
@@ -411,12 +415,12 @@ export class BotAuthenticationMiddleware implements Middleware {
 			let cardActions: CardAction[] = [];
 			let buttonTitle: string;
 			authorizationUris.map((providerAuthUri: ProviderAuthorizationUri) => {
-				if (providerAuthUri.provider === ProviderType.AzureADv1 || providerAuthUri.provider === ProviderType.AzureADv2) {
-					let azureAD: AzureADConfiguration = this.authenticationConfig.azureADv2 ? this.authenticationConfig.azureADv2 : this.authenticationConfig.azureADv1 as AzureADConfiguration;
-					let defaultAzureAD: AzureADDefaults = this.authenticationConfig.azureADv2 ? defaultProviderOptions.azureADv2 : defaultProviderOptions.azureADv1;
-					buttonTitle = azureAD.buttonText ? azureAD.buttonText : defaultAzureAD.buttonText;
+				if (providerAuthUri.provider === ProviderType.AzureADv1) {
+					//we can be sure authenticationConfig.azureADv1 is not undefined given the Provider Type
+					buttonTitle = (this.authenticationConfig.azureADv1!.buttonText ? this.authenticationConfig.azureADv1!.buttonText : defaultProviderOptions.azureADv1.buttonText) as string;					
+				} else if (providerAuthUri.provider === ProviderType.AzureADv2) {
+					buttonTitle = (this.authenticationConfig.azureADv2!.buttonText ? this.authenticationConfig.azureADv2!.buttonText : defaultProviderOptions.azureADv2.buttonText) as string;					
 				} else if (providerAuthUri.provider === ProviderType.Facebook) {
-					//we can be sure facebook is not undefined given the Provider Type
 					buttonTitle = (this.authenticationConfig.facebook!.buttonText ? this.authenticationConfig.facebook!.buttonText : defaultProviderOptions.facebook.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Google) {
 					buttonTitle = (this.authenticationConfig.google!.buttonText ? this.authenticationConfig.google!.buttonText : defaultProviderOptions.google.buttonText) as string;

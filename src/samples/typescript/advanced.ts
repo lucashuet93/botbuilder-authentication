@@ -43,7 +43,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 	onLoginSuccess: async (context: TurnContext, accessToken: string, profile: any, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
 		state.authData = { accessToken, profile, provider };
-		await context.sendActivity(`You're logged in!`);
+		await context.sendActivity(`Hi there ${profile.displayName}!`);
 	},
 	onLoginFailure: async (context: TurnContext, provider: ProviderType): Promise<void> => {
 		const state: StoreItem = conversationState.get(context) as StoreItem;
@@ -53,6 +53,13 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		clientId: '174907033110091',
 		clientSecret: '482d08e1fa468e10d478ccc772452f24',
 		scopes: ['public_profile', 'email', 'user_likes']
+	},
+	azureADv1: {
+		clientId: 'bac92c74-e2b3-4dff-b581-117ce4123f72',
+		clientSecret: 'VBqnvid29m5yZJQluprwgzWUcOB5eCGIGYElTzfTwDA=',
+		scopes: ['User.Read', 'User.ReadBasic'],
+		tenant: 'microsoft.onmicrosoft.com',
+		resource: 'https://graph.windows.net'
 	},
 	azureADv2: {
 		clientId: '2b000a30-1af6-4ad8-b618-85268eada84a',
@@ -79,7 +86,7 @@ const authenticationConfig: BotAuthenticationConfiguration = {
 		let cardActions: CardAction[] = [];
 		let buttonTitle: string;
 		authorizationUris.map((auth: ProviderAuthorizationUri) => {
-			if (auth.provider === ProviderType.AzureADv2) {
+			if (auth.provider === ProviderType.AzureADv1 || auth.provider === ProviderType.AzureADv2) {
 				buttonTitle = 'Microsoft';
 			} else if (auth.provider === ProviderType.Facebook) {
 				buttonTitle = 'Facebook';
