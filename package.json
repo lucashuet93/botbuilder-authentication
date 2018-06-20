@@ -9,8 +9,8 @@
     "auth",
     "simple",
     "facebook",
-    "google",
     "active directory",
+    "google",
     "express",
     "restify"
   ],
