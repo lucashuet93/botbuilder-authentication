@@ -62,7 +62,6 @@ const authenticationConfig = {
 		clientId: 'FACEBOOK_CLIENT_ID',
 		clientSecret: 'FACEBOOK_CLIENT_SECRET'
 	},
-	//the middleware will only use the Azure AD V2 credentials if both versions are provided
 	azureADv1: {
 		clientId: 'AZURE_AD_V1_CLIENT_ID',
 		clientSecret: 'AZURE_AD_V1_CLIENT_SECRET'
@@ -152,7 +151,7 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | scopes                          | Optional      | string[]              | Scopes that the user will be asked to consent to as part of the authentication flow. |
 | buttonText                      | Optional      | string                | Text displayed inside the button that triggers the provider's authentication flow.   |
 | tenant                          | Optional      | string                | Organizational tenant domain.                                                        |
-| resource (V1 Only)              | Optional      | string                | Identifier of the WebAPI that your client wants to access on behalf of the user      |
+| resource                        | Optional      | string                | Identifier of the WebAPI that your client wants to access on behalf of the user      |
 
 #### TwitterConfiguration
 
@@ -507,11 +506,6 @@ server.get('/renderCustomCode', restify.plugins.serveStatic({
 
 The AzureADv1 and AzureADv2 providers declared in the ```BotAuthenticationConfiguration``` object have an optional `tenant` property that accepts a string. If a custom tenant isn't provided, the common endpoint is used by default:
 
-| Property                 | Default Value                              |
-| ------------------------ | ------------------------------------------ |
-| tenant                   | common                                     |
-
-
 #### Default Tenant
 
 ```javascript
@@ -532,10 +526,6 @@ azureADv2: {
 ```
 
 The AzureADv1 provider declared in the ```BotAuthenticationConfiguration``` object has an optional `resource` property that accepts a string. If a custom resource isn't provided, the Microsoft Graph is used by default:
-
-| Property                 | Default Value                              |
-| ------------------------ | ------------------------------------------ |
-| resource                 | https://graph.windows.net                  |
 
 #### Default Resource
 
