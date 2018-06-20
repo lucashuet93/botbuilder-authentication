@@ -2,14 +2,9 @@
 
 ```botbuilder-simple-authentication``` exposes middleware designed to make authentication implementation quick and easy for Bot Framework Adapters.
 
-| Supported Providers |
-|:--------------------:|
-| Facebook            |
-| AzureADv1           |
-| AzureADv2           |
-| Google              |
-| Twitter             |
-| GitHub              |
+|                         |          |          |           |        |         |        |
+|------------------------:|---------:|---------:|----------:|-------:|--------:|-------:|
+| **Supported Providers** | Facebook | AzureADv1| AzureADv2 | Google | Twitter | GitHub |
 
 #### Table of Contents
 1. [Basic Usage](#basic)
@@ -71,7 +66,6 @@ const authenticationConfig = {
 		clientId: 'FACEBOOK_CLIENT_ID',
 		clientSecret: 'FACEBOOK_CLIENT_SECRET'
 	},
-	//the middleware will only use the Azure AD V2 credentials if both versions are provided
 	azureADv1: {
 		clientId: 'AZURE_AD_V1_CLIENT_ID',
 		clientSecret: 'AZURE_AD_V1_CLIENT_SECRET'
@@ -137,8 +131,8 @@ The [samples](https://github.com/lucashuet93/botbuilder-simple-authentication/tr
 | customMagicCodeRedirectEndpoint    | Optional      | string                                                                              | Overrides the default magic code display page. The server endpoint provided will receive a redirect with the magic code in the query string. |
 | noUserFoundMessage                 | Optional      | string                                                                              | Message sent on first conversation turn where the user is not authenticated, immediately prior to the Authentication Card. |
 | facebook                           | Optional      | DefaultProviderConfiguration                                                        | Configuration object that enables Facebook authentication. |
-| azureADv1                          | Optional      | AzureADConfiguration                                                                | Configuration object that enables AzureADv1 authentication. |
-| azureADv2                          | Optional      | AzureADConfiguration                                                                | Configuration object that enables AzureADv2 authentication. |
+| azureADv1                          | Optional      | AzureADConfiguration                                                                | Configuration object that enables AzureADv1 authentication. The middleware only uses the Azure AD V2 credentials if both versions are provided. |
+| azureADv2                          | Optional      | AzureADConfiguration                                                                | Configuration object that enables AzureADv2 authentication. The middleware only uses the Azure AD V2 credentials if both versions are provided. |
 | google                             | Optional      | DefaultProviderConfiguration                                                        | Configuration object that enables Google authentication. |
 | twitter                            | Optional      | TwitterConfiguration                                                                | Configuration object that enables Twitter authentication. |
 | github                             | Optional      | DefaultProviderConfiguration                                                        | Configuration object that enables GitHub authentication. |
