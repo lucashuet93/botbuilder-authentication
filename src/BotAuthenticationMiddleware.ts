@@ -40,14 +40,14 @@ export class BotAuthenticationMiddleware implements Middleware {
      * @param server Restify server, Express application, or Express router that routes requests to the adapter.
      * @param authenticationConfig Configuration settings for the authentication middleware.
     */
-	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration) {
+	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration, baseUrl: string = '::') {
 		this.server = server;
 		this.authenticationConfig = authenticationConfig;
 		this.serverType = this.determineServerType(server);
 		this.initializeServerMiddleware();
 		this.initializeRedirectEndpoints();
 		this.initializeEnvironmentVariables();
-		this.initializePassport();
+		this.initializePassport(baseUrl);
 		//initialize auth data so we can set its properties later
 		this.authData = {
 			selectedProvider: ProviderType.Facebook,
@@ -168,10 +168,10 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	//------------------------------------------ PASSPORT INIT ---------------------------------------------//
 
-	private initializePassport(): void {
+	private initializePassport(baseUrl: string): void {
 		if (this.serverType === ServerType.Restify) {
 			//restify servers can fetch the base url immediately
-			this.baseUrl = (this.server as Server).address().address === '::' ? `http://localhost:${(this.server as Server).address().port}` : (this.server as Server).address().address;
+			this.baseUrl = baseUrl;
 			this.initializePassportProviders();
 		} else {
 			//express is unable to fetch the base url internally, but can inspect incoming requests to do so
@@ -417,9 +417,9 @@ export class BotAuthenticationMiddleware implements Middleware {
 			authorizationUris.map((providerAuthUri: ProviderAuthorizationUri) => {
 				if (providerAuthUri.provider === ProviderType.AzureADv1) {
 					//we can be sure authenticationConfig.azureADv1 is not undefined given the Provider Type
-					buttonTitle = (this.authenticationConfig.azureADv1!.buttonText ? this.authenticationConfig.azureADv1!.buttonText : defaultProviderOptions.azureADv1.buttonText) as string;					
+					buttonTitle = (this.authenticationConfig.azureADv1!.buttonText ? this.authenticationConfig.azureADv1!.buttonText : defaultProviderOptions.azureADv1.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.AzureADv2) {
-					buttonTitle = (this.authenticationConfig.azureADv2!.buttonText ? this.authenticationConfig.azureADv2!.buttonText : defaultProviderOptions.azureADv2.buttonText) as string;					
+					buttonTitle = (this.authenticationConfig.azureADv2!.buttonText ? this.authenticationConfig.azureADv2!.buttonText : defaultProviderOptions.azureADv2.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Facebook) {
 					buttonTitle = (this.authenticationConfig.facebook!.buttonText ? this.authenticationConfig.facebook!.buttonText : defaultProviderOptions.facebook.buttonText) as string;
 				} else if (providerAuthUri.provider === ProviderType.Google) {
