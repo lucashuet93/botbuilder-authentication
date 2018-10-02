@@ -10,6 +10,8 @@ export declare class BotAuthenticationMiddleware implements Middleware {
     private authData;
     private sentCode;
     private serverType;
+    private tenantId;
+    private botId;
     /**
      * Creates a new BotAuthenticationMiddleware instance.
      * @param server Restify server, Express application, or Express router that routes requests to the adapter.

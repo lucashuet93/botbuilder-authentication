@@ -29,21 +29,25 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	private server: any;
 	private authenticationConfig: BotAuthenticationConfiguration;
-	private baseUrl: string;
-	private magicCode: string;
+	private baseUrl: string = '';
+	private magicCode: string = '';
 	private authData: AuthData;
-	private sentCode: boolean;
+	private sentCode: boolean = false;
 	private serverType: ServerType;
+	private tenantId: string = '';
+	private botId: string = '';
 
     /**
      * Creates a new BotAuthenticationMiddleware instance.
      * @param server Restify server, Express application, or Express router that routes requests to the adapter.
      * @param authenticationConfig Configuration settings for the authentication middleware.
     */
-	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration, baseUrl: string = '::') {
+	constructor(server: Server | Application | Router, authenticationConfig: BotAuthenticationConfiguration, baseUrl: string = '::', tenantId: string = '', botId: string = '') {
 		this.server = server;
 		this.authenticationConfig = authenticationConfig;
 		this.serverType = this.determineServerType(server);
+		this.tenantId = tenantId;
+		this.botId = botId;
 		this.initializeServerMiddleware();
 		this.initializeRedirectEndpoints();
 		this.initializeEnvironmentVariables();
@@ -136,11 +140,11 @@ export class BotAuthenticationMiddleware implements Middleware {
 
 	private initializeRedirectEndpoints(): void {
 		//create redirect endpoint for login failure 
-		this.server.get('/auth/failure', (req: any, res: any, next: any) => {
+		this.server.get(`/${this.tenantId}/${this.botId}/auth/failure`, (req: any, res: any, next: any) => {
 			res.json(`Authentication Failed`);
 		});
 		//passport providers ultimately redirect here
-		this.server.get('/auth/callback', (req: any, res: any, next: any) => {
+		this.server.get(`/${this.tenantId}/${this.botId}/auth/callback`, (req: any, res: any, next: any) => {
 			//providers using Passport have already exchanged the authorization code for an access token
 			let magicCode: string = this.generateMagicCode();
 			this.renderMagicCode(req, res, next, magicCode);
@@ -204,13 +208,17 @@ export class BotAuthenticationMiddleware implements Middleware {
 			passport.use(new FacebookStrategy({
 				clientID: this.authenticationConfig.facebook.clientId,
 				clientSecret: this.authenticationConfig.facebook.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/facebook/callback`
+				callbackURL: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/facebook/callback`
 			}, (accessToken: string, refreshToken: string, profile: FacebookProfile, done: Function) => {
 				this.storeAuthenticationData(accessToken, ProviderType.Facebook, profile, done);
 			}));
 			let facebookScope: string[] = this.authenticationConfig.facebook.scopes ? this.authenticationConfig.facebook.scopes : defaultProviderOptions.facebook.scopes;
-			this.server.get('/auth/facebook', passport.authenticate('facebook', { scope: facebookScope }));
-			this.server.get('/auth/facebook/callback', passport.authenticate('facebook', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/facebook`, passport.authenticate('facebook', { scope: facebookScope }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/facebook/callback`,
+				passport.authenticate('facebook', {
+					successRedirect: `/${this.tenantId}/${this.botId}/auth/callback`,
+					failureRedirect: `/${this.tenantId}/${this.botId}/auth/failure`
+				}));
 		};
 
 		//Twitter
@@ -218,14 +226,14 @@ export class BotAuthenticationMiddleware implements Middleware {
 			passport.use(new TwitterStrategy({
 				consumerKey: this.authenticationConfig.twitter.consumerKey,
 				consumerSecret: this.authenticationConfig.twitter.consumerSecret,
-				callbackURL: `${this.baseUrl}/auth/twitter/callback`,
+				callbackURL: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/twitter/callback`,
 				passReqToCallback: true
 			}, (req: any, accessToken: any, refreshToken: any, profile: TwitterProfile, done: Function) => {
 				this.storeAuthenticationData(accessToken, ProviderType.Twitter, profile, done);
 			}));
 			//twitter scopes are set in the developer console
-			this.server.get('/auth/twitter', passport.authenticate('twitter'));
-			this.server.get('/auth/twitter/callback', passport.authenticate('twitter', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/twitter`, passport.authenticate('twitter'));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/twitter/callback`, passport.authenticate('twitter', { successRedirect: `/${this.tenantId}/${this.botId}/auth/callback`, failureRedirect: `/${this.tenantId}/${this.botId}/auth/failure` }));
 		};
 
 		//Google
@@ -233,13 +241,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 			passport.use(new GoogleStrategy({
 				clientID: this.authenticationConfig.google.clientId,
 				clientSecret: this.authenticationConfig.google.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/google/callback`
+				callbackURL: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/google/callback`
 			}, (accessToken: string, refreshToken: string, profile: GoogleProfile, done: Function) => {
 				this.storeAuthenticationData(accessToken, ProviderType.Google, profile, done);
 			}));
 			let googleScope: string[] = this.authenticationConfig.google.scopes ? this.authenticationConfig.google.scopes : defaultProviderOptions.google.scopes;
-			this.server.get('/auth/google', passport.authenticate('google', { scope: googleScope }));
-			this.server.get('/auth/google/callback', passport.authenticate('google', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/google`, passport.authenticate('google', { scope: googleScope }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/google/callback`, passport.authenticate('google', { successRedirect: `/${this.tenantId}/${this.botId}/auth/callback`, failureRedirect: `/${this.tenantId}/${this.botId}/auth/failure` }));
 		};
 
 		//Azure AD v2
@@ -256,10 +264,10 @@ export class BotAuthenticationMiddleware implements Middleware {
 			//Resources are placed in the resourceURL property for V1 apps. V2 apps combine resources with scopes.
 			let options: object = isV2 ?
 				{
-					failureRedirect: '/auth/failure',
+					failureRedirect: `/${this.tenantId}/${this.botId}/auth/failure`,
 					tenantIdOrName: azureADTenant
 				} : {
-					failureRedirect: '/auth/failure',
+					failureRedirect: `/${this.tenantId}/${this.botId}/auth/failure`,
 					tenantIdOrName: azureADTenant,
 					resourceURL: azureADResource
 				}
@@ -272,7 +280,7 @@ export class BotAuthenticationMiddleware implements Middleware {
 				passReqToCallback: false,
 				responseType: 'code',
 				responseMode: 'query',
-				redirectUrl: `${this.baseUrl}/auth/azureAD/callback`,
+				redirectUrl: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/azureAD/callback`,
 				allowHttpForRedirectUrl: !isHttps,
 				scope: azureADScope,
 				//do not validate the issuer unless a tenant is provided. Common doesn't work
@@ -282,13 +290,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 				let provider: ProviderType = isV2 ? ProviderType.AzureADv2 : ProviderType.AzureADv1
 				this.storeAuthenticationData(accessToken, provider, profile, done);
 			}));
-			let url: string = '/auth/callback';
-			this.server.get('/auth/azureAD', passport.authenticate('azuread-openidconnect'));
-			this.server.get('/auth/azureAD/callback', passport.authenticate('azuread-openidconnect', options), (req: any, res: any, next: any) => {
+			let url: string = `/${this.tenantId}/${this.botId}/auth/callback`;
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/azureAD`, passport.authenticate('azuread-openidconnect'));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/azureAD/callback`, passport.authenticate('azuread-openidconnect', options), (req: any, res: any, next: any) => {
 				//Azure AD auth works a bit differently, capture the response here and immediately redirect to the shared callback endpoint
 				this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
 			});;
-			this.server.post('/auth/azureAD/callback', passport.authenticate('azuread-openidconnect', options), (req: any, res: any, next: any) => {
+			this.server.post(`/${this.tenantId}/${this.botId}/auth/azureAD/callback`, passport.authenticate('azuread-openidconnect', options), (req: any, res: any, next: any) => {
 				this.serverType === ServerType.Express ? res.redirect(url, 302) : res.redirect(302, url, next);
 			});;
 		};
@@ -298,13 +306,13 @@ export class BotAuthenticationMiddleware implements Middleware {
 			passport.use(new GitHubStrategy({
 				clientID: this.authenticationConfig.github.clientId,
 				clientSecret: this.authenticationConfig.github.clientSecret,
-				callbackURL: `${this.baseUrl}/auth/github/callback`,
+				callbackURL: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/github/callback`,
 			}, (accessToken: string, refreshToken: string, profile: GitHubProfile, done: Function) => {
 				this.storeAuthenticationData(accessToken, ProviderType.Github, profile, done);
 			}));
 			let githubScope: string[] = this.authenticationConfig.github.scopes ? this.authenticationConfig.github.scopes : defaultProviderOptions.github.scopes;
-			this.server.get('/auth/github', passport.authenticate('github', { scope: githubScope }));
-			this.server.get('/auth/github/callback', passport.authenticate('github', { successRedirect: '/auth/callback', failureRedirect: '/auth/failure' }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/github`, passport.authenticate('github', { scope: githubScope }));
+			this.server.get(`/${this.tenantId}/${this.botId}/auth/github/callback`, passport.authenticate('github', { successRedirect: `/${this.tenantId}/${this.botId}/auth/callback`, failureRedirect: `/${this.tenantId}/${this.botId}/auth/failure` }));
 		};
 	};
 
@@ -393,14 +401,14 @@ export class BotAuthenticationMiddleware implements Middleware {
 	private createAuthorizationUris(): ProviderAuthorizationUri[] {
 		//Pass the authorization uris set up in the Passport initialization back to the user
 		let authorizationUris: ProviderAuthorizationUri[] = [];
-		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/auth/facebook` });
-		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/auth/google` });
-		if (this.authenticationConfig.twitter) authorizationUris.push({ provider: ProviderType.Twitter, authorizationUri: `${this.baseUrl}/auth/twitter` });
-		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/auth/github` });
+		if (this.authenticationConfig.facebook) authorizationUris.push({ provider: ProviderType.Facebook, authorizationUri: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/facebook` });
+		if (this.authenticationConfig.google) authorizationUris.push({ provider: ProviderType.Google, authorizationUri: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/google` });
+		if (this.authenticationConfig.twitter) authorizationUris.push({ provider: ProviderType.Twitter, authorizationUri: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/twitter` });
+		if (this.authenticationConfig.github) authorizationUris.push({ provider: ProviderType.Github, authorizationUri: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/github` });
 		if (this.authenticationConfig.azureADv1 || this.authenticationConfig.azureADv2) {
 			//Maximally send one Azure AD provider. If both are provided, send Azure AD V2
 			let azureADProvider: ProviderType = this.authenticationConfig.azureADv2 ? ProviderType.AzureADv2 : ProviderType.AzureADv1;
-			authorizationUris.push({ provider: azureADProvider, authorizationUri: `${this.baseUrl}/auth/azureAD` });
+			authorizationUris.push({ provider: azureADProvider, authorizationUri: `${this.baseUrl}/${this.tenantId}/${this.botId}/auth/azureAD` });
 		}
 		return authorizationUris;
 	};
